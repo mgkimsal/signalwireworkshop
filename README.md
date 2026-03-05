@@ -388,10 +388,12 @@ Now the exciting part. Go back to the SignalWire Dashboard:
 
 1. Go to **Phone Numbers**
 2. Click on the number you purchased
-3. Under **Voice and Fax Settings**, set the handler to **SWML**
-4. For **When a Call Comes In**, select **Use an external URL**
-5. Enter your ngrok URL: `https://your-domain.ngrok-free.app/`
-6. Click **Save**
+3. Select **Edit Settings**
+4. Click **Select Resource**, then  **+ add**
+5. Create a new **Script**, we will be using a **SWML Script**
+6. Under **Handle Calls Using**, select **External URL**
+7. Enter your ngrok URL: `https://workshop:password123@your-domain.ngrok-free.app/`
+8. Click **Save**
 
 > **Don't forget the trailing slash** on the URL. Your agent is serving on `/`.
 
