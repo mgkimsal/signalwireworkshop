@@ -22,14 +22,8 @@ dependencies {
 }
 
 application {
-    mainClass = 'Agent'
-}
-
-// Allow running any step file by class name:
-//   gradle run -PmainClass=Step04HelloAgent
-//   gradle run -PmainClass=Step11CompleteAgent
-if (project.hasProperty('mainClass')) {
-    application.mainClass = project.property('mainClass')
+    // Default to HelloAgent; override with: gradle run -PmainClass=JokeAgent
+    mainClass = project.hasProperty('mainClass') ? project.property('mainClass') : 'HelloAgent'
 }
 
 tasks.named('run') {
