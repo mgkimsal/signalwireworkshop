@@ -296,14 +296,16 @@ if lang_enabled perl; then
             fi
         fi
 
+        PERL_LOCAL="$SDK_DIR/signalwire-agents-perl/local"
         if command -v cpanm &>/dev/null; then
-            cpanm --quiet --notest --installdeps "$SDK_DIR/signalwire-agents-perl" 2>/dev/null || warn "cpanm installdeps for SDK failed"
-            (cd "$SCRIPT_DIR/perl" && cpanm --quiet --notest --installdeps . 2>/dev/null) || warn "cpanm installdeps for workshop failed"
+            cpanm --quiet --notest --local-lib "$PERL_LOCAL" --installdeps "$SDK_DIR/signalwire-agents-perl" 2>/dev/null || warn "cpanm installdeps for SDK failed"
+            (cd "$SCRIPT_DIR/perl" && cpanm --quiet --notest --local-lib "$PERL_LOCAL" --installdeps . 2>/dev/null) || warn "cpanm installdeps for workshop failed"
         fi
 
         # Create symlink: perl/lib -> SDK lib directory
         ln -sfn "../sdks/signalwire-agents-perl/lib" "$SCRIPT_DIR/perl/lib"
         ok "Perl SDK symlinked at perl/lib"
+        ok "Perl deps installed to sdks/signalwire-agents-perl/local"
     fi
     echo ""
 fi
@@ -378,7 +380,7 @@ for lang in "${LANGS[@]}"; do
         typescript) echo "  TypeScript: cd typescript && npx tsx steps/step04_hello_agent.ts" ;;
         go)         echo "  Go:         cd go && go run ./steps/step04_hello_agent" ;;
         ruby)       echo "  Ruby:       cd ruby && bundle exec ruby steps/step04_hello_agent.rb" ;;
-        perl)       echo "  Perl:       cd perl && perl steps/step04_hello_agent.pl" ;;
+        perl)       echo "  Perl:       cd perl && PERL5LIB=../sdks/signalwire-agents-perl/local/lib/perl5 perl steps/step04_hello_agent.pl" ;;
         java)       echo "  Java:       cd java && source env.sh && gradle run --console=plain" ;;
         cpp)        echo "  C++:        cd cpp && cp steps/step04_hello_agent.cpp agent.cpp && cd build && cmake .. && make && ./agent" ;;
     esac

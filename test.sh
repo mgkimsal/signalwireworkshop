@@ -220,7 +220,7 @@ swaig_test_url() {
             cmd="'$SDK_DIR/signalwire-agents-ruby/bin/swaig-test' --url '$url' $action"
             ;;
         perl)
-            cmd="perl '$SDK_DIR/signalwire-agents-perl/bin/swaig-test' --url '$url' $action"
+            cmd="PERL5LIB='$SDK_DIR/signalwire-agents-perl/local/lib/perl5' perl '$SDK_DIR/signalwire-agents-perl/bin/swaig-test' --url '$url' $action"
             ;;
         java)
             cmd="'$SDK_DIR/signalwire-agents-java/bin/swaig-test' --url '$url' $action"
@@ -258,7 +258,7 @@ start_agent() {
             ;;
         perl)
             set -m
-            (cd "$SCRIPT_DIR/perl" && exec perl "$file" >>"$logfile" 2>&1) &
+            (cd "$SCRIPT_DIR/perl" && PERL5LIB="$SDK_DIR/signalwire-agents-perl/local/lib/perl5${PERL5LIB:+:$PERL5LIB}" exec perl "$file" >>"$logfile" 2>&1) &
             set +m
             ;;
         java)
