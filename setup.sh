@@ -78,29 +78,108 @@ NCPU="$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)"
 
 # ── .env Setup ───────────────────────────────────────────────────────────────
 
-setup_env_file() {
-    if [ ! -f "$SCRIPT_DIR/.env" ]; then
-        if [ -f "$SCRIPT_DIR/.env.example" ]; then
-            cp "$SCRIPT_DIR/.env.example" "$SCRIPT_DIR/.env"
-            info "Created .env from .env.example — edit it with your API keys"
-        else
-            warn "No .env.example found — you'll need to create .env manually"
-        fi
+ask() {
+    local prompt="$1" default="$2" var
+    if [ -n "$default" ]; then
+        printf "  ${prompt} [${default}]: "
     else
-        info ".env already exists"
+        printf "  ${prompt}: "
+    fi
+    read -r var
+    echo "${var:-$default}"
+}
+
+# Read existing .env value if present
+env_val() {
+    local key="$1"
+    if [ -f "$SCRIPT_DIR/.env" ]; then
+        grep "^${key}=" "$SCRIPT_DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-
+    fi
+}
+
+setup_env_file() {
+    local existing=false
+    if [ -f "$SCRIPT_DIR/.env" ]; then
+        existing=true
+    fi
+
+    # Check if .env has real values or just placeholders
+    local needs_setup=false
+    if [ "$existing" = false ]; then
+        needs_setup=true
+    elif grep -q "your-.*-here" "$SCRIPT_DIR/.env" 2>/dev/null; then
+        needs_setup=true
+    fi
+
+    if [ "$needs_setup" = true ]; then
+        printf "\n${BOLD}Environment Setup${RESET}\n"
+        echo "Let's configure your API keys. Press Enter to keep defaults/existing values."
+        echo "You can always edit .env later."
+        echo ""
+
+        # Load existing values as defaults
+        local sw_project sw_token sw_space auth_user auth_pass weather_key ninjas_key
+
+        sw_project=$(env_val SIGNALWIRE_PROJECT_ID)
+        sw_token=$(env_val SIGNALWIRE_API_TOKEN)
+        sw_space=$(env_val SIGNALWIRE_SPACE)
+        auth_user=$(env_val SWML_BASIC_AUTH_USER)
+        auth_pass=$(env_val SWML_BASIC_AUTH_PASSWORD)
+        weather_key=$(env_val WEATHER_API_KEY)
+        ninjas_key=$(env_val API_NINJAS_KEY)
+
+        printf "${BOLD}SignalWire Credentials${RESET} (from dashboard.signalwire.com)\n"
+        sw_project=$(ask "Project ID" "${sw_project}")
+        sw_token=$(ask "API Token" "${sw_token}")
+        sw_space=$(ask "Space (e.g. myspace.signalwire.com)" "${sw_space}")
+        echo ""
+
+        printf "${BOLD}Agent Authentication${RESET} (SignalWire uses these to reach your agent)\n"
+        auth_user=$(ask "Basic Auth User" "${auth_user:-workshop}")
+        auth_pass=$(ask "Basic Auth Password" "${auth_pass:-$(openssl rand -hex 8 2>/dev/null || echo changeMe123)}")
+        echo ""
+
+        printf "${BOLD}External API Keys${RESET} (optional — needed for steps 7+)\n"
+        weather_key=$(ask "WeatherAPI key (weatherapi.com)" "${weather_key}")
+        ninjas_key=$(ask "API Ninjas key (api-ninjas.com)" "${ninjas_key}")
+        echo ""
+
+        # Write .env
+        cat > "$SCRIPT_DIR/.env" <<ENVEOF
+# SignalWire Credentials
+SIGNALWIRE_PROJECT_ID=${sw_project}
+SIGNALWIRE_API_TOKEN=${sw_token}
+SIGNALWIRE_SPACE=${sw_space}
+
+# Agent Authentication (used by SignalWire to reach your agent)
+SWML_BASIC_AUTH_USER=${auth_user}
+SWML_BASIC_AUTH_PASSWORD=${auth_pass}
+
+# ngrok: auto-detected at startup. Uncomment only if not using ngrok.
+# SWML_PROXY_URL_BASE=https://your-server.example.com
+
+# Weather API (weatherapi.com - free tier)
+WEATHER_API_KEY=${weather_key}
+
+# API Ninjas (api-ninjas.com - free tier)
+API_NINJAS_KEY=${ninjas_key}
+ENVEOF
+        ok "Wrote .env with your credentials"
+    else
+        ok ".env already configured"
     fi
 
     # Symlink .env into each language dir so agents find it
     for lang in "${LANGS[@]}"; do
         local dir="$SCRIPT_DIR/$lang"
         [ -d "$dir" ] || continue
-        if [ ! -f "$dir/.env" ] && [ -f "$SCRIPT_DIR/.env" ]; then
+        if [ ! -e "$dir/.env" ] && [ -f "$SCRIPT_DIR/.env" ]; then
             ln -sfn "../.env" "$dir/.env"
         fi
     done
 
     # Java uses env.sh (source-able), not dotenv
-    if lang_enabled java && [ -f "$SCRIPT_DIR/.env" ] && [ ! -f "$SCRIPT_DIR/java/env.sh" ]; then
+    if lang_enabled java && [ -f "$SCRIPT_DIR/.env" ]; then
         {
             echo "#!/usr/bin/env bash"
             echo "# Auto-generated from ../.env — source this before running Java agents"
@@ -109,7 +188,6 @@ setup_env_file() {
             done
         } > "$SCRIPT_DIR/java/env.sh"
         chmod +x "$SCRIPT_DIR/java/env.sh"
-        info "Created java/env.sh from .env"
     fi
 }
 
