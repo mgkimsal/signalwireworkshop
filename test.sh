@@ -242,45 +242,34 @@ swaig_test_url() {
 
 start_agent() {
     local lang="$1" file="$2" logfile="$3"
-    # Use set -m to start in its own process group so kill_agent can kill the whole group
+    # IMPORTANT: redirect subshell stdout/stderr to logfile so that
+    # pid=$(start_agent ...) doesn't hang waiting for the subshell to close its fds
     case "$lang" in
         go)
             local stepdir
             stepdir="$(dirname "$file")"
-            set -m
-            (cd "$SCRIPT_DIR/go" && exec go run "$stepdir" >>"$logfile" 2>&1) &
-            set +m
+            (cd "$SCRIPT_DIR/go" && exec go run "$stepdir") >>"$logfile" 2>&1 &
             ;;
         ruby)
-            set -m
-            (cd "$SCRIPT_DIR/ruby" && exec bundle exec ruby "$file" >>"$logfile" 2>&1) &
-            set +m
+            (cd "$SCRIPT_DIR/ruby" && exec bundle exec ruby "$file") >>"$logfile" 2>&1 &
             ;;
         perl)
-            set -m
-            (cd "$SCRIPT_DIR/perl" && PERL5LIB="$SDK_DIR/signalwire-agents-perl/local/lib/perl5${PERL5LIB:+:$PERL5LIB}" exec perl "$file" >>"$logfile" 2>&1) &
-            set +m
+            (cd "$SCRIPT_DIR/perl" && PERL5LIB="$SDK_DIR/signalwire-agents-perl/local/lib/perl5${PERL5LIB:+:$PERL5LIB}" exec perl "$file") >>"$logfile" 2>&1 &
             ;;
         java)
-            # Java public class name must match filename — extract it from the source
             local cls
             cls=$(grep -o 'public class [A-Za-z0-9_]*' "$file" | head -1 | awk '{print $3}')
-            # Clean out old step files to avoid duplicate class errors
             rm -f "$SCRIPT_DIR/java/src/main/java/"*.java
             mkdir -p "$SCRIPT_DIR/java/src/main/java"
             cp "$file" "$SCRIPT_DIR/java/src/main/java/${cls}.java"
-            set -m
-            (cd "$SCRIPT_DIR/java" && exec gradle run -PmainClass="$cls" --console=plain >>"$logfile" 2>&1) &
-            set +m
+            (cd "$SCRIPT_DIR/java" && exec gradle run -PmainClass="$cls" --console=plain </dev/null) >>"$logfile" 2>&1 &
             ;;
         cpp)
             mkdir -p "$SCRIPT_DIR/cpp/build"
             cp "$file" "$SCRIPT_DIR/cpp/agent.cpp"
-            set -m
             (cd "$SCRIPT_DIR/cpp/build" && cmake .. -DAGENT_SOURCE="$SCRIPT_DIR/cpp/agent.cpp" >>"$logfile" 2>&1 && \
              make -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)" >>"$logfile" 2>&1 && \
-             exec ./agent >>"$logfile" 2>&1) &
-            set +m
+             exec ./agent) >>"$logfile" 2>&1 &
             ;;
     esac
     echo $!
@@ -475,7 +464,10 @@ test_url_based() {
     pid=$(start_agent "$lang" "$file" "$logfile")
 
     # Wait for HTTP (bail early if process already crashed)
-    if ! wait_for_port "$PORT" "$TIMEOUT" "$pid"; then
+    # Java/C++ need longer — gradle daemon cold start + compilation
+    local timeout="$TIMEOUT"
+    case "$lang" in java|cpp) timeout=30 ;; esac
+    if ! wait_for_port "$PORT" "$timeout" "$pid"; then
         fail "$label: agent did not start within ${TIMEOUT}s (see $logfile)"
         kill_agent "$pid"
         sleep 1
@@ -508,15 +500,16 @@ test_url_based() {
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
-# Export all vars from .env so every language (especially Java) can find them
+# Export all vars from .env — these MUST override any inherited env vars
+# (e.g. user may have sourced env.sh with different credentials)
 if [ -f "$SCRIPT_DIR/.env" ]; then
-    set -a
-    source <(grep -v '^\s*#' "$SCRIPT_DIR/.env" | grep -v '^\s*$')
-    set +a
+    while IFS='=' read -r key val; do
+        export "$key=$val"
+    done < <(grep -v '^\s*#' "$SCRIPT_DIR/.env" | grep -v '^\s*$')
 fi
-# Ensure auth vars are set even without .env
-export SWML_BASIC_AUTH_USER="${SWML_BASIC_AUTH_USER:-$AUTH_USER}"
-export SWML_BASIC_AUTH_PASSWORD="${SWML_BASIC_AUTH_PASSWORD:-$AUTH_PASS}"
+# Force auth to match what we read from .env at the top
+export SWML_BASIC_AUTH_USER="$AUTH_USER"
+export SWML_BASIC_AUTH_PASSWORD="$AUTH_PASS"
 
 LOGDIR="$SCRIPT_DIR/.test-logs"
 mkdir -p "$LOGDIR"
