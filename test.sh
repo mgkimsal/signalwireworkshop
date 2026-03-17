@@ -541,6 +541,35 @@ for lang in "${LANGS[@]}"; do
         continue
     fi
 
+    # Pre-flight: ensure build artifacts exist
+    case "$lang" in
+        java)
+            if ! ls "$SCRIPT_DIR/java/libs/signalwire-agents-"*.jar &>/dev/null; then
+                info "Building Java SDK jar..."
+                local gcmd="gradle"
+                [ -x "$SDK_DIR/signalwire-agents-java/gradlew" ] && gcmd="$SDK_DIR/signalwire-agents-java/gradlew"
+                if (cd "$SDK_DIR/signalwire-agents-java" && $gcmd jar --console=plain -q 2>/dev/null); then
+                    mkdir -p "$SCRIPT_DIR/java/libs"
+                    cp "$SDK_DIR/signalwire-agents-java/build/libs/signalwire-agents-"*.jar "$SCRIPT_DIR/java/libs/"
+                else
+                    skip "$lang: failed to build SDK jar"
+                    continue
+                fi
+            fi
+            ;;
+        cpp)
+            if [ ! -f "$SDK_DIR/signalwire-agents-cpp/build/libsignalwire_agents.a" ]; then
+                info "Building C++ SDK..."
+                mkdir -p "$SDK_DIR/signalwire-agents-cpp/build"
+                if ! (cd "$SDK_DIR/signalwire-agents-cpp/build" && cmake .. -q 2>/dev/null && \
+                      make -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)" 2>/dev/null); then
+                    skip "$lang: failed to build SDK"
+                    continue
+                fi
+            fi
+            ;;
+    esac
+
     for step in "${STEPS[@]}"; do
         label="${lang}/step${step}"
         file="$(agent_file "$lang" "$step")"
