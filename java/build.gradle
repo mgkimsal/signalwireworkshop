@@ -16,7 +16,7 @@ repositories {
 
 dependencies {
     // The SDK jar + its transitive deps
-    implementation name: 'signalwire-agents-1.0.0'
+    implementation name: 'signalwire-agents-1.1.0'
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'org.java-websocket:Java-WebSocket:1.5.6'
 }
