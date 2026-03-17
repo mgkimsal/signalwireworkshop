@@ -1,0 +1,4 @@
+sdks/
+perl/lib
+python/venv/
+.test-logs/

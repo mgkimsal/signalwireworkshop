@@ -2,5 +2,5 @@
 
 source 'https://rubygems.org'
 
-gem 'signalwire_agents'
+gem 'signalwire_agents', path: '../sdks/signalwire-agents-ruby'
 gem 'dotenv'

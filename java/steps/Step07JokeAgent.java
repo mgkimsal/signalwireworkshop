@@ -130,7 +130,7 @@ public class JokeAgent {
                 "tell_joke",
                 "Tell the caller a funny dad joke. Use this whenever someone asks for a joke, humor, or to be entertained.",
                 Map.of("type", "object", "properties", Map.of()),
-                Step07JokeAgent::tellJoke
+                JokeAgent::tellJoke
         );
 
         agent.setPostPrompt(

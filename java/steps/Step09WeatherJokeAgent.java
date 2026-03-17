@@ -174,7 +174,7 @@ public class WeatherJokeAgent {
                 "tell_joke",
                 "Tell the caller a funny dad joke. Use this whenever someone asks for a joke or humor.",
                 Map.of("type", "object", "properties", Map.of()),
-                Step09WeatherJokeAgent::tellJoke
+                WeatherJokeAgent::tellJoke
         );
 
         // DataMap: weather

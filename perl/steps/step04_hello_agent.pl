@@ -3,7 +3,7 @@
 
 use strict;
 use warnings;
-use lib 'lib';
+use lib "$ENV{HOME}/perl5/lib/perl5", 'lib';
 use JSON;
 use File::Path qw(make_path);
 use POSIX qw(strftime);

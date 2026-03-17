@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Example:  cmake .. -DSIGNALWIRE_SDK_DIR=$HOME/signalwire-agents-cpp
 if(NOT DEFINED SIGNALWIRE_SDK_DIR)
     # Default: assume the SDK lives next to the workshop repo
-    set(SIGNALWIRE_SDK_DIR "${CMAKE_SOURCE_DIR}/../../signalwire-agents-cpp"
+    set(SIGNALWIRE_SDK_DIR "${CMAKE_SOURCE_DIR}/../sdks/signalwire-agents-cpp"
         CACHE PATH "Path to signalwire-agents-cpp repo root")
 endif()
 

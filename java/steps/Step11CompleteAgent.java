@@ -228,7 +228,7 @@ public class CompleteAgent {
                 "Tell the caller a funny dad joke. Use this whenever "
                 + "someone asks for a joke, humor, or to be entertained.",
                 Map.of("type", "object", "properties", Map.of()),
-                Step11CompleteAgent::tellJoke
+                CompleteAgent::tellJoke
         );
 
         // ---- Weather: DataMap ----
@@ -247,7 +247,7 @@ public class CompleteAgent {
                 + "Note what the caller asked about (weather, jokes, time, math, etc.) "
                 + "and how the interaction went.");
 
-        agent.onSummary(Step11CompleteAgent::saveSummary);
+        agent.onSummary(CompleteAgent::saveSummary);
 
         System.out.println("Starting complete agent on port 3000...");
         agent.run();

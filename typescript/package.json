@@ -6,7 +6,7 @@
     "start": "npx tsx agent.ts"
   },
   "dependencies": {
-    "signalwire-agents": "latest",
+    "signalwire-agents": "file:../sdks/signalwire-agents-typescript",
     "dotenv": "^16.4.0"
   },
   "devDependencies": {

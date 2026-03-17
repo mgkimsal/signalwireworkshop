@@ -21,6 +21,7 @@ import (
 	"github.com/signalwire/signalwire-agents-go/pkg/agent"
 	"github.com/signalwire/signalwire-agents-go/pkg/datamap"
 	"github.com/signalwire/signalwire-agents-go/pkg/swaig"
+	_ "github.com/signalwire/signalwire-agents-go/pkg/skills/builtin"
 )
 
 // ---------------------------------------------------------------------------
