@@ -411,8 +411,8 @@ The agent you built today is a starting point. Here's a taste of what the SDK ca
 
 | Language | Repository |
 |----------|-----------|
-| Python | [github.com/signalwire/signalwire-agents](https://github.com/signalwire/signalwire-agents) |
-| TypeScript | [github.com/signalwire/signalwire-agents-js](https://github.com/signalwire/signalwire-agents-js) |
+| Python | [github.com/signalwire/signalwire-agents-python](https://github.com/signalwire/signalwire-agents-python) |
+| TypeScript | [github.com/signalwire/signalwire-agents-typescript](https://github.com/signalwire/signalwire-agents-typescript) |
 | Ruby | [github.com/signalwire/signalwire-agents-ruby](https://github.com/signalwire/signalwire-agents-ruby) |
 | Go | [github.com/signalwire/signalwire-agents-go](https://github.com/signalwire/signalwire-agents-go) |
 | Perl | [github.com/signalwire/signalwire-agents-perl](https://github.com/signalwire/signalwire-agents-perl) |
