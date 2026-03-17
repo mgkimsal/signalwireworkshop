@@ -28,4 +28,6 @@ application {
 
 tasks.named('run') {
     standardInput = System.in
+    // Pass environment variables through to the forked JVM
+    environment System.getenv()
 }
