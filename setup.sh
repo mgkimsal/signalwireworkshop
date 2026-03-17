@@ -81,9 +81,9 @@ NCPU="$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)"
 ask() {
     local prompt="$1" default="$2" var
     if [ -n "$default" ]; then
-        printf "  ${prompt} [${default}]: "
+        printf "  ${prompt} [${default}]: " >&2
     else
-        printf "  ${prompt}: "
+        printf "  ${prompt}: " >&2
     fi
     read -r var
     echo "${var:-$default}"
