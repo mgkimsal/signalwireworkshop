@@ -72,7 +72,29 @@ source env.sh
 
 > **Important:** The `SWML_BASIC_AUTH_USER` and `SWML_BASIC_AUTH_PASSWORD` are credentials that SignalWire will use to authenticate with your agent. Choose whatever you want, but remember them -- you'll enter them into the SignalWire dashboard later.
 
-### Step 3: Create build.gradle
+### Step 3: Build the SDK
+
+The SignalWire Agents SDK for Java is not yet published to Maven Central. You'll build it from source and copy the jar into your project.
+
+```bash
+# Clone and build the SDK
+git clone https://github.com/signalwire/signalwire-agents-java.git
+cd signalwire-agents-java
+gradle jar
+cd ..
+
+# Create libs/ in your project and copy the jar
+mkdir -p workshop-agent/libs
+cp signalwire-agents-java/build/libs/signalwire-agents-1.0.0.jar workshop-agent/libs/
+```
+
+> **Note:** You only need to do this once. The jar in `libs/` is all you need going forward. You can delete the cloned `signalwire-agents-java` directory if you want.
+
+### Step 4: Create build.gradle
+
+```bash
+cd workshop-agent
+```
 
 Create a `build.gradle` file:
 
@@ -89,10 +111,15 @@ java {
 
 repositories {
     mavenCentral()
+    // Local SDK jar
+    flatDir { dirs 'libs' }
 }
 
 dependencies {
-    implementation 'com.signalwire:signalwire-agents:1.0.0'
+    // The SDK jar + its transitive deps
+    implementation name: 'signalwire-agents-1.0.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.6'
 }
 
 application {
@@ -106,7 +133,7 @@ And a `settings.gradle` file:
 rootProject.name = 'workshop-agent'
 ```
 
-### Step 4: Set Up the Source Directory
+### Step 5: Set Up the Source Directory
 
 Gradle expects your Java files in `src/main/java/`:
 
@@ -121,6 +148,8 @@ workshop-agent/
 ├── env.sh
 ├── build.gradle
 ├── settings.gradle
+├── libs/
+│   └── signalwire-agents-1.0.0.jar
 └── src/
     └── main/
         └── java/

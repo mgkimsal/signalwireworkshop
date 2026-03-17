@@ -10,10 +10,15 @@ java {
 
 repositories {
     mavenCentral()
+    // Local SDK jar — built from the signalwire-agents-java repo
+    flatDir { dirs 'libs' }
 }
 
 dependencies {
-    implementation 'com.signalwire:signalwire-agents:1.0.0'
+    // The SDK jar + its transitive deps
+    implementation name: 'signalwire-agents-1.0.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.java-websocket:Java-WebSocket:1.5.6'
 }
 
 application {
