@@ -2,7 +2,7 @@
  * Polished agent with skills added -- weather, jokes, datetime, and math.
  *
  * Run:
- *   gradle run -PmainClass=Step10WeatherJokeAgent
+ *   gradle run -PmainClass=WeatherJokeAgent
  *
  * Test:
  *   curl -s -u workshop:PASS http://localhost:3000/ | python3 -m json.tool
@@ -27,7 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
-public class Step10WeatherJokeAgent {
+public class WeatherJokeAgent {
 
     private static final Gson gson = new Gson();
     private static final HttpClient httpClient = HttpClient.newBuilder()

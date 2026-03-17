@@ -2,7 +2,7 @@
  * My first AI phone agent -- Hello World edition.
  *
  * Run:
- *   gradle run -PmainClass=Step04HelloAgent
+ *   gradle run -PmainClass=HelloAgent
  *
  * Test:
  *   curl -s -u workshop:PASS http://localhost:3000/ | python3 -m json.tool
@@ -26,7 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
-public class Step04HelloAgent {
+public class HelloAgent {
 
     private static final Gson gson = new Gson();
 

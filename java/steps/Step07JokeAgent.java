@@ -2,7 +2,7 @@
  * Agent that tells fresh dad jokes from API Ninjas.
  *
  * Run:
- *   gradle run -PmainClass=Step07JokeAgent
+ *   gradle run -PmainClass=JokeAgent
  *
  * Test:
  *   curl -s -u workshop:PASS http://localhost:3000/ | python3 -m json.tool
@@ -26,7 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
-public class Step07JokeAgent {
+public class JokeAgent {
 
     private static final Gson gson = new Gson();
     private static final HttpClient httpClient = HttpClient.newBuilder()

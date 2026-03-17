@@ -8,7 +8,7 @@
  *   - Math via built-in skill
  *
  * Run:
- *   gradle run -PmainClass=Step11CompleteAgent
+ *   gradle run -PmainClass=CompleteAgent
  *
  * Test:
  *   curl -s -u workshop:PASS http://localhost:3000/ | python3 -m json.tool
@@ -33,7 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
-public class Step11CompleteAgent {
+public class CompleteAgent {
 
     private static final Gson gson = new Gson();
     private static final HttpClient httpClient = HttpClient.newBuilder()

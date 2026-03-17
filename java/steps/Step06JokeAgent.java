@@ -2,7 +2,7 @@
  * Agent with a hardcoded joke function.
  *
  * Run:
- *   gradle run -PmainClass=Step06JokeAgent
+ *   gradle run -PmainClass=JokeAgent
  *
  * Test:
  *   curl -s -u workshop:PASS http://localhost:3000/ | python3 -m json.tool
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Step06JokeAgent {
+public class JokeAgent {
 
     private static final Gson gson = new Gson();
 
