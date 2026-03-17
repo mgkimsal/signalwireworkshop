@@ -538,6 +538,14 @@ for lang in "${LANGS[@]}"; do
     # Pre-flight: ensure build artifacts exist
     case "$lang" in
         java)
+            # Auto-detect brew openjdk on macOS
+            if command -v brew &>/dev/null; then
+                brew_jdk="$(brew --prefix openjdk 2>/dev/null)/libexec/openjdk.jdk/Contents/Home"
+                if [ -d "$brew_jdk" ]; then
+                    export JAVA_HOME="$brew_jdk"
+                    export PATH="$JAVA_HOME/bin:$PATH"
+                fi
+            fi
             if ! ls "$SCRIPT_DIR/java/libs/signalwire-agents-"*.jar &>/dev/null; then
                 info "Building Java SDK jar..."
                 gcmd="gradle"

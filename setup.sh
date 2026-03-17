@@ -323,10 +323,44 @@ if lang_enabled java; then
     fi
 
     if [ -n "$GRADLE_CMD" ]; then
-        # Check Java version
-        javaver=$(java -version 2>&1 | head -1 | grep -o '"[^"]*"' | tr -d '"' | cut -d. -f1)
+        # Auto-detect brew openjdk on macOS if JAVA_HOME isn't set or points to old Java
+        _detect_java_home() {
+            local raw major
+            raw=$(java -version 2>&1 | head -1 | grep -o '"[^"]*"' | tr -d '"')
+            major=$(echo "$raw" | awk -F. '{ if ($1 == 1) print $2; else print $1 }')
+            if [ "${major:-0}" -ge 21 ]; then
+                return 0
+            fi
+            # Try brew openjdk
+            if command -v brew &>/dev/null; then
+                local brew_jdk
+                brew_jdk="$(brew --prefix openjdk 2>/dev/null)/libexec/openjdk.jdk/Contents/Home"
+                if [ -d "$brew_jdk" ]; then
+                    export JAVA_HOME="$brew_jdk"
+                    export PATH="$JAVA_HOME/bin:$PATH"
+                    info "Using brew openjdk: $JAVA_HOME"
+                    return 0
+                fi
+            fi
+            # Try /usr/libexec/java_home on macOS
+            if [ -x /usr/libexec/java_home ]; then
+                local jh
+                jh=$(/usr/libexec/java_home -v 21+ 2>/dev/null || true)
+                if [ -n "$jh" ] && [ -d "$jh" ]; then
+                    export JAVA_HOME="$jh"
+                    export PATH="$JAVA_HOME/bin:$PATH"
+                    info "Using Java from: $JAVA_HOME"
+                    return 0
+                fi
+            fi
+            return 1
+        }
+        _detect_java_home
+
+        javaver_raw=$(java -version 2>&1 | head -1 | grep -o '"[^"]*"' | tr -d '"')
+        javaver=$(echo "$javaver_raw" | awk -F. '{ if ($1 == 1) print $2; else print $1 }')
         if [ "${javaver:-0}" -lt 21 ]; then
-            warn "Java 21+ required but found version ${javaver:-unknown}"
+            warn "Java 21+ required but found version ${javaver_raw:-unknown}"
         else
             (cd "$SDK_DIR/signalwire-agents-java" && $GRADLE_CMD jar --console=plain -q)
             mkdir -p "$SCRIPT_DIR/java/libs"
