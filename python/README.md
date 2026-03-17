@@ -29,61 +29,15 @@ Each section has a corresponding step file in `steps/` with the complete working
 
 ## Section 3: Project Setup (5 min)
 
-Your SignalWire account and external API keys should already be set up from the [shared setup](../README.md). Now let's create the project.
-
-### Step 1: Create Your Project Directory
-
-Open a terminal and set up your project:
+From the workshop root directory, run the setup script and activate the virtual environment:
 
 ```bash
-mkdir workshop-agent
-cd workshop-agent
+./setup.sh python
+cd python
+source venv/bin/activate
 ```
 
-### Step 2: Create Your Environment File
-
-Create a file called `.env` in your project directory with all your keys:
-
-```
-# SignalWire Credentials
-SIGNALWIRE_PROJECT_ID=your-project-id-here
-SIGNALWIRE_API_TOKEN=your-api-token-here
-SIGNALWIRE_SPACE=your-space.signalwire.com
-
-# Agent Authentication
-SWML_BASIC_AUTH_USER=workshop
-SWML_BASIC_AUTH_PASSWORD=pickASecurePassword123
-
-# Weather API
-WEATHER_API_KEY=your-weatherapi-key-here
-
-# API Ninjas
-API_NINJAS_KEY=your-api-ninjas-key-here
-```
-
-Replace every placeholder with your actual values.
-
-> **Note:** You might notice there's no `SWML_PROXY_URL_BASE` here. Our agent code will auto-detect your ngrok tunnel at startup -- no need to configure it manually. If you're not using ngrok (e.g., deploying to a cloud server), you can add `SWML_PROXY_URL_BASE=https://your-server.example.com` to this file as a fallback.
-
-> **Important:** The `SWML_BASIC_AUTH_USER` and `SWML_BASIC_AUTH_PASSWORD` are credentials that SignalWire will use to authenticate with your agent. Choose whatever you want, but remember them -- you'll enter them into the SignalWire dashboard later.
-
-### Step 3: Create requirements.txt
-
-Create a `requirements.txt` file:
-
-```
-signalwire-agents
-python-dotenv
-requests
-```
-
-Your project directory should now look like this:
-
-```
-workshop-agent/
-├── .env
-└── requirements.txt
-```
+This creates a `.env` file (if one doesn't exist), installs dependencies, and gets your project ready to go.
 
 ---
 
@@ -91,95 +45,7 @@ workshop-agent/
 
 Time to write some code. We'll start with the simplest possible agent -- just enough to prove everything is wired up correctly.
 
-### Step 1: Create a Virtual Environment and Install
-
-```bash
-python3 -m venv venv
-source venv/bin/activate      # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-You should see `signalwire-agents`, `python-dotenv`, `requests`, and their dependencies install successfully.
-
-### Step 2: Write Your First Agent
-
-Create a file called `hello_agent.py`:
-
-`hello_agent.py`
-
-```python
-#!/usr/bin/env python3
-"""My first AI phone agent -- Hello World edition."""
-
-import json
-import os
-from datetime import datetime
-import requests
-from dotenv import load_dotenv
-load_dotenv()
-
-def check_ngrok():
-    """Auto-detect ngrok tunnel and set SWML_PROXY_URL_BASE."""
-    try:
-        resp = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=1)
-        tunnels = resp.json().get("tunnels", [])
-        for t in tunnels:
-            if t.get("proto") == "https":
-                url = t["public_url"]
-                os.environ["SWML_PROXY_URL_BASE"] = url
-                print(f"ngrok detected: {url}")
-                return url
-    except Exception:
-        pass
-    current = os.getenv("SWML_PROXY_URL_BASE", "")
-    if current:
-        print(f"Using SWML_PROXY_URL_BASE from .env: {current}")
-    else:
-        print("No ngrok tunnel detected and SWML_PROXY_URL_BASE not set")
-    return current
-
-check_ngrok()
-
-from signalwire_agents import AgentBase
-
-class HelloAgent(AgentBase):
-    def __init__(self):
-        super().__init__(name="hello-agent")
-
-        # Set up the voice
-        self.add_language(
-            "English", "en-US", "rime.spore",
-            speech_fillers=["Um", "Well"]
-        )
-
-        # Tell the AI who it is
-        self.prompt_add_section(
-            "Role",
-            "You are a friendly assistant named Buddy. "
-            "You greet callers warmly, ask how their day is going, "
-            "and have a brief pleasant conversation. "
-            "Keep your responses short since this is a phone call."
-        )
-
-        # Post-prompt: summarize every call and save to calls/ folder
-        self.set_post_prompt(
-            "Summarize this conversation in 2-3 sentences. "
-            "Include what the caller wanted and how the conversation went."
-        )
-
-    def on_summary(self, summary, raw_data):
-        """Save post-prompt data to calls/ folder for debugging."""
-        os.makedirs("calls", exist_ok=True)
-        call_id = (raw_data or {}).get("call_id", datetime.now().strftime("%Y%m%d_%H%M%S"))
-        filepath = os.path.join("calls", f"{call_id}.json")
-        with open(filepath, "w") as f:
-            json.dump(raw_data, f, indent=2, default=str)
-        print(f"Call summary saved: {filepath}")
-
-if __name__ == "__main__":
-    agent = HelloAgent()
-    agent.run()
-```
+> See [steps/step04_hello_agent.py](steps/step04_hello_agent.py)
 
 Let's break down what's happening:
 
@@ -192,7 +58,7 @@ Let's break down what's happening:
 - `on_summary()` receives that data and saves the full JSON payload to a `calls/` folder. Each file is named by call ID. You can upload these files to [postpromptviewer.signalwire.io](https://postpromptviewer.signalwire.io/) to visualize and debug your agent's conversations.
 - `agent.run()` starts a web server on port 3000
 
-### Step 3: Test with swaig-test
+### Test with swaig-test
 
 Before we run the server, let's verify the agent's configuration is valid:
 
@@ -296,117 +162,7 @@ Your agent can talk, but it can't *do* anything. Let's fix that by teaching it t
 
 SWAIG (SignalWire AI Gateway) functions are tools that the AI can decide to call during a conversation. See [the full explanation](../README.md#what-are-swaig-functions) for details.
 
-### Step 1: Create the Joke Agent
-
-Create a new file called `joke_agent.py`:
-
-`joke_agent.py`
-
-```python
-#!/usr/bin/env python3
-"""Agent with a hardcoded joke function."""
-
-import json
-import os
-import random
-from datetime import datetime
-import requests
-from dotenv import load_dotenv
-load_dotenv()
-
-def check_ngrok():
-    """Auto-detect ngrok tunnel and set SWML_PROXY_URL_BASE."""
-    try:
-        resp = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=1)
-        tunnels = resp.json().get("tunnels", [])
-        for t in tunnels:
-            if t.get("proto") == "https":
-                url = t["public_url"]
-                os.environ["SWML_PROXY_URL_BASE"] = url
-                print(f"ngrok detected: {url}")
-                return url
-    except Exception:
-        pass
-    current = os.getenv("SWML_PROXY_URL_BASE", "")
-    if current:
-        print(f"Using SWML_PROXY_URL_BASE from .env: {current}")
-    else:
-        print("No ngrok tunnel detected and SWML_PROXY_URL_BASE not set")
-    return current
-
-check_ngrok()
-
-from signalwire_agents import AgentBase, SwaigFunctionResult
-
-JOKES = [
-    "Why do programmers prefer dark mode? Because light attracts bugs.",
-    "I told my wife she was drawing her eyebrows too high. She looked surprised.",
-    "What do you call a fake noodle? An impasta.",
-    "Why don't scientists trust atoms? Because they make up everything.",
-    "I'm reading a book about anti-gravity. It's impossible to put down.",
-    "What did the ocean say to the beach? Nothing, it just waved.",
-    "Why did the scarecrow win an award? He was outstanding in his field.",
-    "I used to hate facial hair, but then it grew on me.",
-]
-
-class JokeAgent(AgentBase):
-    def __init__(self):
-        super().__init__(name="joke-agent")
-
-        self.add_language(
-            "English", "en-US", "rime.spore",
-            speech_fillers=["Um", "Well"],
-            function_fillers=["Let me think of a good one..."]
-        )
-
-        self.prompt_add_section(
-            "Role",
-            "You are a friendly assistant named Buddy. "
-            "You love telling jokes and making people laugh. "
-            "Keep your responses short since this is a phone call."
-        )
-
-        self.prompt_add_section(
-            "Guidelines",
-            body="Follow these guidelines:",
-            bullets=[
-                "When someone asks for a joke, use the tell_joke function",
-                "After telling a joke, pause for a reaction before offering another",
-                "Be enthusiastic and have fun with it",
-            ]
-        )
-
-        # Register the joke function
-        self.define_tool(
-            name="tell_joke",
-            description="Tell the caller a funny joke. Use this whenever someone asks for a joke or humor.",
-            parameters={"type": "object", "properties": {}},
-            handler=self.on_tell_joke,
-        )
-
-        # Post-prompt: summarize every call and save to calls/ folder
-        self.set_post_prompt(
-            "Summarize this conversation in 2-3 sentences. "
-            "Note which jokes were told and how the caller reacted."
-        )
-
-    def on_tell_joke(self, args, raw_data):
-        joke = random.choice(JOKES)
-        return SwaigFunctionResult(f"Here's a joke: {joke}")
-
-    def on_summary(self, summary, raw_data):
-        """Save post-prompt data to calls/ folder for debugging."""
-        os.makedirs("calls", exist_ok=True)
-        call_id = (raw_data or {}).get("call_id", datetime.now().strftime("%Y%m%d_%H%M%S"))
-        filepath = os.path.join("calls", f"{call_id}.json")
-        with open(filepath, "w") as f:
-            json.dump(raw_data, f, indent=2, default=str)
-        print(f"Call summary saved: {filepath}")
-
-if __name__ == "__main__":
-    agent = JokeAgent()
-    agent.run()
-```
+> See [steps/step06_joke_agent.py](steps/step06_joke_agent.py)
 
 Let's look at the new pieces:
 
@@ -415,7 +171,7 @@ Let's look at the new pieces:
 - `parameters` defines what the AI should extract from the conversation. Our joke function doesn't need any input, so it's an empty object.
 - `function_fillers` are phrases the agent says while your function executes, so there's no awkward silence.
 
-### Step 2: Test the Function
+### Test the Function
 
 Stop your previous agent (Ctrl+C) and test the new one:
 
@@ -431,7 +187,7 @@ swaig-test joke_agent.py --exec tell_joke
 
 You should see a joke from the list. Run it a few times -- you'll get different jokes.
 
-### Step 3: Run and Call
+### Run and Call
 
 ```bash
 python joke_agent.py
@@ -452,7 +208,7 @@ The AI should recognize these as requests for humor and call your function.
 
 Hardcoded jokes get old fast. Let's replace them with fresh dad jokes from the API Ninjas Dad Jokes API. Every call will be a different joke.
 
-### Step 1: Understanding the API
+### Understanding the API
 
 The API Ninjas Dad Jokes endpoint is simple:
 
@@ -467,121 +223,11 @@ You can test it right now in your terminal:
 curl -s -H "X-Api-Key: YOUR_API_NINJAS_KEY" https://api.api-ninjas.com/v1/dadjokes | python3 -m json.tool
 ```
 
-### Step 2: Update the Joke Agent
+### Update the Joke Agent
 
-Edit `joke_agent.py` -- we'll replace the hardcoded jokes with a live API call. Replace the entire file:
+> See [steps/step07_joke_agent.py](steps/step07_joke_agent.py)
 
-`joke_agent.py`
-
-```python
-#!/usr/bin/env python3
-"""Agent that tells fresh dad jokes from API Ninjas."""
-
-import json
-import os
-from datetime import datetime
-import requests
-from dotenv import load_dotenv
-load_dotenv()
-
-def check_ngrok():
-    """Auto-detect ngrok tunnel and set SWML_PROXY_URL_BASE."""
-    try:
-        resp = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=1)
-        tunnels = resp.json().get("tunnels", [])
-        for t in tunnels:
-            if t.get("proto") == "https":
-                url = t["public_url"]
-                os.environ["SWML_PROXY_URL_BASE"] = url
-                print(f"ngrok detected: {url}")
-                return url
-    except Exception:
-        pass
-    current = os.getenv("SWML_PROXY_URL_BASE", "")
-    if current:
-        print(f"Using SWML_PROXY_URL_BASE from .env: {current}")
-    else:
-        print("No ngrok tunnel detected and SWML_PROXY_URL_BASE not set")
-    return current
-
-check_ngrok()
-
-from signalwire_agents import AgentBase, SwaigFunctionResult
-
-class JokeAgent(AgentBase):
-    def __init__(self):
-        super().__init__(name="joke-agent")
-
-        self.add_language(
-            "English", "en-US", "rime.spore",
-            speech_fillers=["Um", "Well"],
-            function_fillers=["Let me think of a good one..."]
-        )
-
-        self.prompt_add_section(
-            "Role",
-            "You are a friendly assistant named Buddy. "
-            "You love telling jokes and making people laugh. "
-            "Keep your responses short since this is a phone call."
-        )
-
-        self.prompt_add_section(
-            "Guidelines",
-            body="Follow these guidelines:",
-            bullets=[
-                "When someone asks for a joke, use the tell_joke function",
-                "After telling a joke, pause for a reaction before offering another",
-                "Be enthusiastic and have fun with it",
-            ]
-        )
-
-        self.define_tool(
-            name="tell_joke",
-            description="Tell the caller a funny dad joke. Use this whenever someone asks for a joke, humor, or to be entertained.",
-            parameters={"type": "object", "properties": {}},
-            handler=self.on_tell_joke,
-        )
-
-        # Post-prompt: summarize every call and save to calls/ folder
-        self.set_post_prompt(
-            "Summarize this conversation in 2-3 sentences. "
-            "Note which jokes were told and how the caller reacted."
-        )
-
-    def on_tell_joke(self, args, raw_data):
-        api_key = os.getenv("API_NINJAS_KEY", "")
-        if not api_key:
-            return SwaigFunctionResult("Sorry, I can't access my joke book right now. My API key is missing.")
-
-        try:
-            resp = requests.get(
-                "https://api.api-ninjas.com/v1/dadjokes",
-                headers={"X-Api-Key": api_key},
-                timeout=5,
-            )
-            resp.raise_for_status()
-            jokes = resp.json()
-            if jokes:
-                return SwaigFunctionResult(f"Here's a dad joke: {jokes[0]['joke']}")
-            return SwaigFunctionResult("I tried to find a joke but came up empty. That's... kind of a joke itself?")
-        except requests.RequestException:
-            return SwaigFunctionResult("Sorry, my joke service is taking a nap. Ask me again in a moment!")
-
-    def on_summary(self, summary, raw_data):
-        """Save post-prompt data to calls/ folder for debugging."""
-        os.makedirs("calls", exist_ok=True)
-        call_id = (raw_data or {}).get("call_id", datetime.now().strftime("%Y%m%d_%H%M%S"))
-        filepath = os.path.join("calls", f"{call_id}.json")
-        with open(filepath, "w") as f:
-            json.dump(raw_data, f, indent=2, default=str)
-        print(f"Call summary saved: {filepath}")
-
-if __name__ == "__main__":
-    agent = JokeAgent()
-    agent.run()
-```
-
-What changed:
+What changed from the hardcoded version:
 
 - Removed the `JOKES` list and `random` import
 - Added `os` and `requests` imports
@@ -589,7 +235,7 @@ What changed:
 - We read the API key from the environment (your `.env` file)
 - There's error handling -- if the API is down or the key is wrong, the agent says something graceful instead of crashing
 
-### Step 3: Test It
+### Test It
 
 ```bash
 swaig-test joke_agent.py --exec tell_joke
@@ -597,7 +243,7 @@ swaig-test joke_agent.py --exec tell_joke
 
 Run it several times. Every joke should be different. If you see an error about the API key, make sure `API_NINJAS_KEY` is set in your `.env` file.
 
-### Step 4: Call and Test
+### Call and Test
 
 Restart your agent:
 
@@ -622,161 +268,9 @@ Think of it this way:
 - **define_tool** = "When the AI needs weather, send a request to my server, I'll call the weather API and return the result"
 - **DataMap** = "When the AI needs weather, here's the weather API URL and how to format the response -- you do it, SignalWire"
 
-### Step 1: Create the Weather + Joke Agent
+### Create the Weather + Joke Agent
 
-Let's create a new agent that has both jokes (via your custom function) and weather (via DataMap). Create `weather_joke_agent.py`:
-
-`weather_joke_agent.py`
-
-```python
-#!/usr/bin/env python3
-"""Agent with dad jokes (custom function) and weather (DataMap)."""
-
-import json
-import os
-from datetime import datetime
-import requests
-from dotenv import load_dotenv
-load_dotenv()
-
-def check_ngrok():
-    """Auto-detect ngrok tunnel and set SWML_PROXY_URL_BASE."""
-    try:
-        resp = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=1)
-        tunnels = resp.json().get("tunnels", [])
-        for t in tunnels:
-            if t.get("proto") == "https":
-                url = t["public_url"]
-                os.environ["SWML_PROXY_URL_BASE"] = url
-                print(f"ngrok detected: {url}")
-                return url
-    except Exception:
-        pass
-    current = os.getenv("SWML_PROXY_URL_BASE", "")
-    if current:
-        print(f"Using SWML_PROXY_URL_BASE from .env: {current}")
-    else:
-        print("No ngrok tunnel detected and SWML_PROXY_URL_BASE not set")
-    return current
-
-check_ngrok()
-
-from signalwire_agents import AgentBase, SwaigFunctionResult
-from signalwire_agents.core.data_map import DataMap
-
-class WeatherJokeAgent(AgentBase):
-    def __init__(self):
-        super().__init__(name="weather-joke-agent")
-
-        self.add_language(
-            "English", "en-US", "rime.spore",
-            speech_fillers=["Um", "Well"],
-            function_fillers=[
-                "Let me check on that...",
-                "One moment...",
-            ]
-        )
-
-        self.prompt_add_section(
-            "Role",
-            "You are a friendly assistant named Buddy. "
-            "You help people with weather information and tell great jokes. "
-            "Keep your responses short since this is a phone call."
-        )
-
-        self.prompt_add_section(
-            "Guidelines",
-            body="Follow these guidelines:",
-            bullets=[
-                "When someone asks about weather, use the get_weather function",
-                "When someone asks for a joke, use the tell_joke function",
-                "Be warm, friendly, and conversational",
-            ]
-        )
-
-        self._register_joke_function()
-        self._register_weather_datamap()
-
-        # Post-prompt: summarize every call and save to calls/ folder
-        self.set_post_prompt(
-            "Summarize this conversation in 2-3 sentences. "
-            "Note what the caller asked about (weather, jokes, etc.) "
-            "and how the interaction went."
-        )
-
-    def _register_joke_function(self):
-        """Register the dad joke function (runs on our server)."""
-        self.define_tool(
-            name="tell_joke",
-            description="Tell the caller a funny dad joke. Use this whenever someone asks for a joke or humor.",
-            parameters={"type": "object", "properties": {}},
-            handler=self.on_tell_joke,
-            fillers={
-                "en-US": ["Let me think of a good one..."],
-            },
-        )
-
-    def on_tell_joke(self, args, raw_data):
-        api_key = os.getenv("API_NINJAS_KEY", "")
-        if not api_key:
-            return SwaigFunctionResult("Sorry, my joke book is unavailable right now.")
-
-        try:
-            resp = requests.get(
-                "https://api.api-ninjas.com/v1/dadjokes",
-                headers={"X-Api-Key": api_key},
-                timeout=5,
-            )
-            resp.raise_for_status()
-            jokes = resp.json()
-            if jokes:
-                return SwaigFunctionResult(f"Here's a dad joke: {jokes[0]['joke']}")
-            return SwaigFunctionResult("I couldn't find a joke this time. Try again!")
-        except requests.RequestException:
-            return SwaigFunctionResult("My joke service is taking a break. Try again in a moment!")
-
-    def _register_weather_datamap(self):
-        """Register weather lookup via DataMap (runs on SignalWire's servers)."""
-        api_key = os.getenv("WEATHER_API_KEY", "")
-
-        weather_dm = (
-            DataMap("get_weather")
-            .description(
-                "Get the current weather for a city. "
-                "Use this when the caller asks about weather, temperature, or conditions."
-            )
-            .parameter("city", "string", "The city to get weather for", required=True)
-            .webhook(
-                "GET",
-                f"https://api.weatherapi.com/v1/current.json?key={api_key}&q=${{enc:args.city}}"
-            )
-            .output(SwaigFunctionResult(
-                "Weather in ${args.city}: ${response.current.condition.text}, "
-                "${response.current.temp_f} degrees Fahrenheit, "
-                "humidity ${response.current.humidity} percent. "
-                "Feels like ${response.current.feelslike_f} degrees."
-            ))
-            .fallback_output(SwaigFunctionResult(
-                "Sorry, I couldn't get the weather for ${args.city}. "
-                "Please check the city name and try again."
-            ))
-        )
-
-        self.register_swaig_function(weather_dm.to_swaig_function())
-
-    def on_summary(self, summary, raw_data):
-        """Save post-prompt data to calls/ folder for debugging."""
-        os.makedirs("calls", exist_ok=True)
-        call_id = (raw_data or {}).get("call_id", datetime.now().strftime("%Y%m%d_%H%M%S"))
-        filepath = os.path.join("calls", f"{call_id}.json")
-        with open(filepath, "w") as f:
-            json.dump(raw_data, f, indent=2, default=str)
-        print(f"Call summary saved: {filepath}")
-
-if __name__ == "__main__":
-    agent = WeatherJokeAgent()
-    agent.run()
-```
+> See [steps/step08_weather_joke_agent.py](steps/step08_weather_joke_agent.py)
 
 Let's unpack the DataMap piece:
 
@@ -789,7 +283,7 @@ Let's unpack the DataMap piece:
 
 The API key is baked into the URL at startup time (via the f-string). The city gets substituted at call time (via `${enc:args.city}`).
 
-### Step 2: Test It
+### Test It
 
 ```bash
 swaig-test weather_joke_agent.py --list-tools
@@ -811,7 +305,7 @@ swaig-test weather_joke_agent.py --exec tell_joke
 
 > **Note:** You can't test DataMap functions locally with `--exec` because they run on SignalWire's infrastructure, not your server. You'll test weather by calling your agent.
 
-### Step 3: Call and Test
+### Call and Test
 
 Stop any running agent and start the new one:
 
@@ -835,192 +329,7 @@ You now have an agent with two capabilities, built two different ways.
 
 Your agent works, but it sounds a bit robotic. Let's give it a personality and tune the conversation flow. Same file, better experience.
 
-### Step 1: Upgrade the Prompts
-
-Edit `weather_joke_agent.py`. Replace the entire file with this improved version -- we're keeping the same structure but enhancing the prompt sections and adding AI parameters:
-
-`weather_joke_agent.py`
-
-```python
-#!/usr/bin/env python3
-"""Polished agent with personality, hints, and tuned parameters."""
-
-import json
-import os
-from datetime import datetime
-import requests
-from dotenv import load_dotenv
-load_dotenv()
-
-def check_ngrok():
-    """Auto-detect ngrok tunnel and set SWML_PROXY_URL_BASE."""
-    try:
-        resp = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=1)
-        tunnels = resp.json().get("tunnels", [])
-        for t in tunnels:
-            if t.get("proto") == "https":
-                url = t["public_url"]
-                os.environ["SWML_PROXY_URL_BASE"] = url
-                print(f"ngrok detected: {url}")
-                return url
-    except Exception:
-        pass
-    current = os.getenv("SWML_PROXY_URL_BASE", "")
-    if current:
-        print(f"Using SWML_PROXY_URL_BASE from .env: {current}")
-    else:
-        print("No ngrok tunnel detected and SWML_PROXY_URL_BASE not set")
-    return current
-
-check_ngrok()
-
-from signalwire_agents import AgentBase, SwaigFunctionResult
-from signalwire_agents.core.data_map import DataMap
-
-class WeatherJokeAgent(AgentBase):
-    def __init__(self):
-        super().__init__(name="weather-joke-agent")
-
-        # Voice configuration with fillers for natural conversation
-        self.add_language(
-            "English", "en-US", "rime.spore",
-            speech_fillers=["Um", "Well", "So"],
-            function_fillers=[
-                "Let me check on that for you...",
-                "One moment while I look that up...",
-                "Hang on just a sec...",
-            ]
-        )
-
-        # AI parameters for better conversation flow
-        self.set_params({
-            "end_of_speech_timeout": 600,    # Wait 600ms of silence before responding
-            "attention_timeout": 15000,      # Prompt after 15s of silence
-            "attention_timeout_prompt": "Are you still there? I can help with weather, jokes, or math!",
-        })
-
-        # Speech hints help the recognizer with tricky words
-        self.add_hints(["Buddy", "weather", "joke", "temperature", "forecast"])
-
-        # Structured prompt with personality
-        self.prompt_add_section(
-            "Personality",
-            "You are Buddy, a cheerful and witty AI phone assistant. "
-            "You have a warm, upbeat personality and you genuinely enjoy "
-            "helping people. You're a bit of a dad joke enthusiast. "
-            "Think of yourself as that friendly neighbor who always "
-            "has a joke ready and knows what the weather is like."
-        )
-
-        self.prompt_add_section(
-            "Voice Style",
-            body="Since this is a phone conversation, follow these rules:",
-            bullets=[
-                "Keep responses to 1-2 sentences when possible",
-                "Use conversational language, not formal or robotic",
-                "React to what the caller says before jumping to information",
-                "If they laugh at a joke, acknowledge it warmly",
-                "Use natural transitions between topics",
-            ]
-        )
-
-        self.prompt_add_section(
-            "Capabilities",
-            body="You can help with the following:",
-            bullets=[
-                "Weather: current conditions for any city worldwide",
-                "Jokes: endless supply of dad jokes, always fresh",
-                "General chat: friendly conversation on any topic",
-            ]
-        )
-
-        self._register_joke_function()
-        self._register_weather_datamap()
-
-        # Post-prompt: summarize every call and save to calls/ folder
-        self.set_post_prompt(
-            "Summarize this conversation in 2-3 sentences. "
-            "Note what the caller asked about (weather, jokes, etc.) "
-            "and how the interaction went."
-        )
-
-    def _register_joke_function(self):
-        """Register the dad joke function (runs on our server)."""
-        self.define_tool(
-            name="tell_joke",
-            description="Tell the caller a funny dad joke. Use this whenever someone asks for a joke or humor.",
-            parameters={"type": "object", "properties": {}},
-            handler=self.on_tell_joke,
-            fillers={
-                "en-US": [
-                    "Let me think of a good one...",
-                    "Oh, I've got one for you...",
-                    "Here comes a good one...",
-                ],
-            },
-        )
-
-    def on_tell_joke(self, args, raw_data):
-        api_key = os.getenv("API_NINJAS_KEY", "")
-        if not api_key:
-            return SwaigFunctionResult("Sorry, my joke book is unavailable right now.")
-
-        try:
-            resp = requests.get(
-                "https://api.api-ninjas.com/v1/dadjokes",
-                headers={"X-Api-Key": api_key},
-                timeout=5,
-            )
-            resp.raise_for_status()
-            jokes = resp.json()
-            if jokes:
-                return SwaigFunctionResult(f"Here's a dad joke: {jokes[0]['joke']}")
-            return SwaigFunctionResult("I couldn't find a joke this time. Try again!")
-        except requests.RequestException:
-            return SwaigFunctionResult("My joke service is taking a break. Try again in a moment!")
-
-    def _register_weather_datamap(self):
-        """Register weather lookup via DataMap (runs on SignalWire's servers)."""
-        api_key = os.getenv("WEATHER_API_KEY", "")
-
-        weather_dm = (
-            DataMap("get_weather")
-            .description(
-                "Get the current weather for a city. "
-                "Use this when the caller asks about weather, temperature, or conditions."
-            )
-            .parameter("city", "string", "The city to get weather for", required=True)
-            .webhook(
-                "GET",
-                f"https://api.weatherapi.com/v1/current.json?key={api_key}&q=${{enc:args.city}}"
-            )
-            .output(SwaigFunctionResult(
-                "Weather in ${args.city}: ${response.current.condition.text}, "
-                "${response.current.temp_f} degrees Fahrenheit, "
-                "humidity ${response.current.humidity} percent. "
-                "Feels like ${response.current.feelslike_f} degrees."
-            ))
-            .fallback_output(SwaigFunctionResult(
-                "Sorry, I couldn't get the weather for ${args.city}. "
-                "Please check the city name and try again."
-            ))
-        )
-
-        self.register_swaig_function(weather_dm.to_swaig_function())
-
-    def on_summary(self, summary, raw_data):
-        """Save post-prompt data to calls/ folder for debugging."""
-        os.makedirs("calls", exist_ok=True)
-        call_id = (raw_data or {}).get("call_id", datetime.now().strftime("%Y%m%d_%H%M%S"))
-        filepath = os.path.join("calls", f"{call_id}.json")
-        with open(filepath, "w") as f:
-            json.dump(raw_data, f, indent=2, default=str)
-        print(f"Call summary saved: {filepath}")
-
-if __name__ == "__main__":
-    agent = WeatherJokeAgent()
-    agent.run()
-```
+> See [steps/step09_weather_joke_agent.py](steps/step09_weather_joke_agent.py)
 
 What we improved:
 
@@ -1029,7 +338,7 @@ What we improved:
 - **Richer prompts** -- the "Personality" section gives the AI a character to play. The "Voice Style" section has specific rules for phone conversation. The "Capabilities" section tells the AI what tools it has.
 - **More fillers** -- multiple options per function so the agent doesn't say the same thing every time.
 
-### Step 2: Test and Call
+### Test and Call
 
 ```bash
 swaig-test weather_joke_agent.py --dump-swml
@@ -1053,38 +362,16 @@ You've now built a custom function (jokes) and a DataMap function (weather). The
 
 Skills are pre-built capabilities that ship with the SDK. Adding one is a single line of code. See [the full explanation](../README.md#what-are-skills) for details.
 
-### Step 1: Add DateTime and Math Skills
+> See [steps/step10_weather_joke_agent.py](steps/step10_weather_joke_agent.py)
 
-Edit `weather_joke_agent.py`. Add two lines inside `__init__`, after the `_register_weather_datamap()` call:
-
-```python
-        self._register_joke_function()
-        self._register_weather_datamap()
-
-        # Built-in skills -- one line each, zero configuration
-        self.add_skill("datetime", {"default_timezone": "America/New_York"})
-        self.add_skill("math")
-```
-
-Also update the "Capabilities" prompt section to mention the new abilities:
+Two lines of code just gave your agent the ability to tell time in any timezone and do math:
 
 ```python
-        self.prompt_add_section(
-            "Capabilities",
-            body="You can help with the following:",
-            bullets=[
-                "Weather: current conditions for any city worldwide",
-                "Jokes: endless supply of dad jokes, always fresh",
-                "Date and time: current time in any timezone",
-                "Math: calculations, percentages, conversions",
-                "General chat: friendly conversation on any topic",
-            ]
-        )
+self.add_skill("datetime", {"default_timezone": "America/New_York"})
+self.add_skill("math")
 ```
 
-That's it. Two lines of code just gave your agent the ability to tell time in any timezone and do math.
-
-### Step 2: Compare the Approaches
+### Compare the Approaches
 
 Let's look at what it took to add each capability:
 
@@ -1101,7 +388,7 @@ Let's look at what it took to add each capability:
 - **DataMap** -- when you need to call a REST API. No server code, SignalWire handles it
 - **define_tool** -- when you need custom logic, database access, or complex processing
 
-### Step 3: Test the New Skills
+### Test the New Skills
 
 ```bash
 swaig-test weather_joke_agent.py --list-tools
@@ -1114,7 +401,7 @@ swaig-test weather_joke_agent.py --exec get_current_time
 swaig-test weather_joke_agent.py --exec calculate --expression "15/100 * 47.50"
 ```
 
-### Step 4: Call and Test
+### Call and Test
 
 Restart the agent and call:
 
@@ -1137,272 +424,7 @@ Try asking:
 
 Let's bring everything together into one clean, final version. This is the definitive `complete_agent.py` -- combining all four capabilities with polished prompts and tuned parameters.
 
-### The Complete Agent
-
-Create `complete_agent.py`:
-
-`complete_agent.py`
-
-```python
-#!/usr/bin/env python3
-"""
-Complete Workshop Agent
------------------------
-A polished AI phone assistant with four capabilities:
-  - Dad jokes via API Ninjas (custom define_tool)
-  - Weather via WeatherAPI (serverless DataMap)
-  - Date/time via built-in skill
-  - Math via built-in skill
-
-Run: python complete_agent.py
-Test: swaig-test complete_agent.py --dump-swml
-"""
-
-import json
-import os
-from datetime import datetime
-import requests
-from dotenv import load_dotenv
-load_dotenv()
-
-def check_ngrok():
-    """Auto-detect ngrok tunnel and set SWML_PROXY_URL_BASE."""
-    try:
-        resp = requests.get("http://127.0.0.1:4040/api/tunnels", timeout=1)
-        tunnels = resp.json().get("tunnels", [])
-        for t in tunnels:
-            if t.get("proto") == "https":
-                url = t["public_url"]
-                os.environ["SWML_PROXY_URL_BASE"] = url
-                print(f"ngrok detected: {url}")
-                return url
-    except Exception:
-        pass
-    current = os.getenv("SWML_PROXY_URL_BASE", "")
-    if current:
-        print(f"Using SWML_PROXY_URL_BASE from .env: {current}")
-    else:
-        print("No ngrok tunnel detected and SWML_PROXY_URL_BASE not set")
-    return current
-
-check_ngrok()
-
-from signalwire_agents import AgentBase, SwaigFunctionResult
-from signalwire_agents.core.data_map import DataMap
-
-
-class CompleteAgent(AgentBase):
-    def __init__(self):
-        super().__init__(name="complete-agent")
-
-        self._configure_voice()
-        self._configure_params()
-        self._configure_prompts()
-        self._register_joke_function()
-        self._register_weather_datamap()
-        self._register_skills()
-        self._configure_post_prompt()
-
-    # ------------------------------------------------------------------
-    # Voice and speech
-    # ------------------------------------------------------------------
-
-    def _configure_voice(self):
-        self.add_language(
-            "English", "en-US", "rime.spore",
-            speech_fillers=["Um", "Well", "So"],
-            function_fillers=[
-                "Let me check on that for you...",
-                "One moment while I look that up...",
-                "Hang on just a sec...",
-            ]
-        )
-
-        self.add_hints([
-            "Buddy", "weather", "joke", "temperature",
-            "forecast", "Fahrenheit", "Celsius",
-        ])
-
-    # ------------------------------------------------------------------
-    # AI parameters
-    # ------------------------------------------------------------------
-
-    def _configure_params(self):
-        self.set_params({
-            "end_of_speech_timeout": 600,
-            "attention_timeout": 15000,
-            "attention_timeout_prompt":
-                "Are you still there? I can help with weather, "
-                "jokes, math, or just chat!",
-        })
-
-    # ------------------------------------------------------------------
-    # Prompts
-    # ------------------------------------------------------------------
-
-    def _configure_prompts(self):
-        self.prompt_add_section(
-            "Personality",
-            "You are Buddy, a cheerful and witty AI phone assistant. "
-            "You have a warm, upbeat personality and you genuinely enjoy "
-            "helping people. You're a bit of a dad joke enthusiast. "
-            "Think of yourself as that friendly neighbor who always "
-            "has a joke ready and knows what the weather is like."
-        )
-
-        self.prompt_add_section(
-            "Voice Style",
-            body="Since this is a phone conversation:",
-            bullets=[
-                "Keep responses to 1-2 sentences when possible",
-                "Use conversational language, not formal or robotic",
-                "React naturally to what the caller says",
-                "Use smooth transitions between topics",
-            ]
-        )
-
-        self.prompt_add_section(
-            "Capabilities",
-            body="You can help with:",
-            bullets=[
-                "Weather: current conditions for any city worldwide",
-                "Jokes: endless supply of fresh dad jokes",
-                "Date and time: current time in any timezone",
-                "Math: calculations, percentages, unit conversions",
-                "General chat: friendly conversation on any topic",
-            ]
-        )
-
-        self.prompt_add_section(
-            "Greeting",
-            "When the call starts, introduce yourself as Buddy and "
-            "briefly mention what you can help with. Keep the greeting "
-            "to one or two sentences -- don't list every capability."
-        )
-
-    # ------------------------------------------------------------------
-    # Dad jokes -- custom function calling API Ninjas
-    # ------------------------------------------------------------------
-
-    def _register_joke_function(self):
-        self.define_tool(
-            name="tell_joke",
-            description=(
-                "Tell the caller a funny dad joke. Use this whenever "
-                "someone asks for a joke, humor, or to be entertained."
-            ),
-            parameters={"type": "object", "properties": {}},
-            handler=self.on_tell_joke,
-            fillers={
-                "en-US": [
-                    "Let me think of a good one...",
-                    "Oh, I've got one for you...",
-                    "Here comes a good one...",
-                ],
-            },
-        )
-
-    def on_tell_joke(self, args, raw_data):
-        api_key = os.getenv("API_NINJAS_KEY", "")
-        if not api_key:
-            return SwaigFunctionResult(
-                "Sorry, my joke book is unavailable right now."
-            )
-
-        try:
-            resp = requests.get(
-                "https://api.api-ninjas.com/v1/dadjokes",
-                headers={"X-Api-Key": api_key},
-                timeout=5,
-            )
-            resp.raise_for_status()
-            jokes = resp.json()
-            if jokes:
-                return SwaigFunctionResult(
-                    f"Here's a dad joke: {jokes[0]['joke']}"
-                )
-            return SwaigFunctionResult(
-                "I couldn't find a joke this time. Try again!"
-            )
-        except requests.RequestException:
-            return SwaigFunctionResult(
-                "My joke service is taking a break. Try again in a moment!"
-            )
-
-    # ------------------------------------------------------------------
-    # Weather -- DataMap (runs on SignalWire, not our server)
-    # ------------------------------------------------------------------
-
-    def _register_weather_datamap(self):
-        api_key = os.getenv("WEATHER_API_KEY", "")
-
-        weather_dm = (
-            DataMap("get_weather")
-            .description(
-                "Get the current weather for a city. Use this when "
-                "the caller asks about weather, temperature, or conditions."
-            )
-            .parameter(
-                "city", "string",
-                "The city to get weather for",
-                required=True,
-            )
-            .webhook(
-                "GET",
-                "https://api.weatherapi.com/v1/current.json"
-                f"?key={api_key}&q=${{enc:args.city}}"
-            )
-            .output(SwaigFunctionResult(
-                "Weather in ${args.city}: "
-                "${response.current.condition.text}, "
-                "${response.current.temp_f} degrees Fahrenheit, "
-                "humidity ${response.current.humidity} percent. "
-                "Feels like ${response.current.feelslike_f} degrees."
-            ))
-            .fallback_output(SwaigFunctionResult(
-                "Sorry, I couldn't get the weather for ${args.city}. "
-                "Please check the city name and try again."
-            ))
-        )
-
-        self.register_swaig_function(weather_dm.to_swaig_function())
-
-    # ------------------------------------------------------------------
-    # Skills -- built-in, zero-code capabilities
-    # ------------------------------------------------------------------
-
-    def _register_skills(self):
-        self.add_skill("datetime", {"default_timezone": "America/New_York"})
-        self.add_skill("math")
-
-    # ------------------------------------------------------------------
-    # Post-prompt -- save call summaries for debugging
-    # ------------------------------------------------------------------
-
-    def _configure_post_prompt(self):
-        self.set_post_prompt(
-            "Summarize this conversation in 2-3 sentences. "
-            "Note what the caller asked about (weather, jokes, time, math, etc.) "
-            "and how the interaction went."
-        )
-
-    def on_summary(self, summary, raw_data):
-        """Save post-prompt data to calls/ folder for debugging.
-
-        View saved files at: https://postpromptviewer.signalwire.io/
-        """
-        os.makedirs("calls", exist_ok=True)
-        call_id = (raw_data or {}).get("call_id", datetime.now().strftime("%Y%m%d_%H%M%S"))
-        filepath = os.path.join("calls", f"{call_id}.json")
-        with open(filepath, "w") as f:
-            json.dump(raw_data, f, indent=2, default=str)
-        print(f"Call summary saved: {filepath}")
-
-
-if __name__ == "__main__":
-    agent = CompleteAgent()
-    agent.run()
-```
+> See [steps/step11_complete_agent.py](steps/step11_complete_agent.py)
 
 ### What's Different From the Iterative Version?
 
@@ -1450,27 +472,6 @@ Call your number and run through all the capabilities:
 5. "Thanks Buddy, you're great!" -- personality shines
 
 > **Checkpoint:** All four capabilities work end-to-end through a phone call. Your agent has personality, handles pauses naturally, and uses filler phrases while thinking. This is your complete, polished AI phone assistant. Congratulations -- you built this!
-
----
-
-## Your Files
-
-Here's what you created today:
-
-```
-workshop-agent/
-├── .env                      # Your API keys and configuration
-├── requirements.txt          # Python dependencies
-├── hello_agent.py            # Section 4 -- minimal agent
-├── joke_agent.py             # Sections 6-7 -- jokes (hardcoded, then API)
-├── weather_joke_agent.py     # Sections 8-10 -- weather + jokes + skills
-├── complete_agent.py         # Section 11 -- the final polished version
-└── calls/                    # Post-prompt data saved after each call
-    ├── abc123-def456.json    # One JSON file per call
-    └── ...
-```
-
-Upload files from `calls/` to [postpromptviewer.signalwire.io](https://postpromptviewer.signalwire.io/) to visualize your conversations.
 
 ---
 
