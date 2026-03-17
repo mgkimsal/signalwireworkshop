@@ -508,14 +508,15 @@ test_url_based() {
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
-# Set up minimal env so agents can start without a real .env
-export SWML_BASIC_AUTH_USER="$AUTH_USER"
-export SWML_BASIC_AUTH_PASSWORD="$AUTH_PASS"
-export SIGNALWIRE_PROJECT_ID="${SIGNALWIRE_PROJECT_ID:-00000000-0000-0000-0000-000000000000}"
-export SIGNALWIRE_API_TOKEN="${SIGNALWIRE_API_TOKEN:-test-token}"
-export SIGNALWIRE_SPACE="${SIGNALWIRE_SPACE:-test.signalwire.com}"
-export WEATHER_API_KEY="${WEATHER_API_KEY:-dummy-key}"
-export API_NINJAS_KEY="${API_NINJAS_KEY:-dummy-key}"
+# Export all vars from .env so every language (especially Java) can find them
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    set -a
+    source <(grep -v '^\s*#' "$SCRIPT_DIR/.env" | grep -v '^\s*$')
+    set +a
+fi
+# Ensure auth vars are set even without .env
+export SWML_BASIC_AUTH_USER="${SWML_BASIC_AUTH_USER:-$AUTH_USER}"
+export SWML_BASIC_AUTH_PASSWORD="${SWML_BASIC_AUTH_PASSWORD:-$AUTH_PASS}"
 
 LOGDIR="$SCRIPT_DIR/.test-logs"
 mkdir -p "$LOGDIR"
