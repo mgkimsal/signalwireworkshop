@@ -19,8 +19,13 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SDK_DIR="$SCRIPT_DIR/sdks"
 PORT="${PORT:-3000}"
 TIMEOUT="${TIMEOUT:-15}"          # seconds to wait for agent startup
-AUTH_USER="testing"
-AUTH_PASS="testing"
+# Read auth from .env if it exists, otherwise use defaults
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    AUTH_USER=$(grep '^SWML_BASIC_AUTH_USER=' "$SCRIPT_DIR/.env" 2>/dev/null | cut -d= -f2- || echo "testing")
+    AUTH_PASS=$(grep '^SWML_BASIC_AUTH_PASSWORD=' "$SCRIPT_DIR/.env" 2>/dev/null | cut -d= -f2- || echo "testing")
+fi
+AUTH_USER="${AUTH_USER:-testing}"
+AUTH_PASS="${AUTH_PASS:-testing}"
 
 ALL_LANGS=(python typescript go ruby perl java cpp)
 ALL_STEPS=(04 06 07 08 09 10 11)
