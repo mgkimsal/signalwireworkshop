@@ -546,7 +546,7 @@ for lang in "${LANGS[@]}"; do
         java)
             if ! ls "$SCRIPT_DIR/java/libs/signalwire-agents-"*.jar &>/dev/null; then
                 info "Building Java SDK jar..."
-                local gcmd="gradle"
+                gcmd="gradle"
                 [ -x "$SDK_DIR/signalwire-agents-java/gradlew" ] && gcmd="$SDK_DIR/signalwire-agents-java/gradlew"
                 if (cd "$SDK_DIR/signalwire-agents-java" && $gcmd jar --console=plain -q 2>/dev/null); then
                     mkdir -p "$SCRIPT_DIR/java/libs"
