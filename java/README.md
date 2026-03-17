@@ -27,12 +27,14 @@ Each section has a corresponding step file in `steps/` with the complete working
 
 ### Running a Step File
 
-Copy the step into `src/main/java/` and run it with Gradle:
+Each step file's name (e.g. `Step04HelloAgent.java`) differs from the public class inside (e.g. `HelloAgent`). Java requires the filename to match the class name, so copy and rename:
 
 ```bash
-cp steps/Step04HelloAgent.java src/main/java/
-gradle run -PmainClass=Step04HelloAgent
+cp steps/Step04HelloAgent.java src/main/java/HelloAgent.java
+gradle run -PmainClass=HelloAgent
 ```
+
+The class names are: `HelloAgent`, `JokeAgent`, `WeatherJokeAgent`, `CompleteAgent`.
 
 ---
 
@@ -62,8 +64,8 @@ See [steps/Step04HelloAgent.java](steps/Step04HelloAgent.java) for the complete 
 
 ```bash
 source env.sh
-cp steps/Step04HelloAgent.java src/main/java/
-gradle build && gradle run -PmainClass=Step04HelloAgent
+cp steps/Step04HelloAgent.java src/main/java/HelloAgent.java
+gradle run -PmainClass=HelloAgent
 ```
 
 You'll see "No ngrok tunnel detected" -- that's expected, we set up ngrok in Section 5.
@@ -93,7 +95,7 @@ Your agent is running locally, but SignalWire's cloud can't reach `localhost:300
 Now that ngrok is running, restart your agent (Ctrl+C the old one, then run it again). This time you should see `ngrok detected: https://your-domain.ngrok-free.app` -- the `checkNgrok()` method discovers the tunnel automatically.
 
 ```bash
-gradle run -PmainClass=Step04HelloAgent
+gradle run -PmainClass=HelloAgent
 ```
 
 ### Step 2: Test Through the Tunnel
@@ -149,8 +151,8 @@ See [steps/Step06JokeAgent.java](steps/Step06JokeAgent.java) for the complete co
 ### Test and Run
 
 ```bash
-cp steps/Step06JokeAgent.java src/main/java/
-gradle run -PmainClass=Step06JokeAgent
+cp steps/Step06JokeAgent.java src/main/java/JokeAgent.java
+gradle run -PmainClass=JokeAgent
 ```
 
 Verify with curl that `tell_joke` appears in the SWML JSON, then call your number. Try phrases like:
@@ -198,8 +200,8 @@ See [steps/Step07JokeAgent.java](steps/Step07JokeAgent.java) for the complete co
 ### Test and Call
 
 ```bash
-cp steps/Step07JokeAgent.java src/main/java/
-gradle run -PmainClass=Step07JokeAgent
+cp steps/Step07JokeAgent.java src/main/java/JokeAgent.java
+gradle run -PmainClass=JokeAgent
 ```
 
 Call your number and ask for jokes. Every joke is now fresh from the internet.
@@ -235,8 +237,8 @@ See [steps/Step08WeatherJokeAgent.java](steps/Step08WeatherJokeAgent.java) for t
 ### Test It
 
 ```bash
-cp steps/Step08WeatherJokeAgent.java src/main/java/
-gradle run -PmainClass=Step08WeatherJokeAgent
+cp steps/Step08WeatherJokeAgent.java src/main/java/WeatherJokeAgent.java
+gradle run -PmainClass=WeatherJokeAgent
 ```
 
 Fetch the SWML with curl and find the `get_weather` function. Notice it has a `data_map` section instead of a `web_hook_url` -- that tells SignalWire to execute the API call directly.
@@ -272,8 +274,8 @@ See [steps/Step09WeatherJokeAgent.java](steps/Step09WeatherJokeAgent.java) for t
 ### Test and Call
 
 ```bash
-cp steps/Step09WeatherJokeAgent.java src/main/java/
-gradle run -PmainClass=Step09WeatherJokeAgent
+cp steps/Step09WeatherJokeAgent.java src/main/java/WeatherJokeAgent.java
+gradle run -PmainClass=WeatherJokeAgent
 ```
 
 The difference should be noticeable: more natural speech, personality, and better pause handling.
@@ -322,8 +324,8 @@ See [steps/Step10WeatherJokeAgent.java](steps/Step10WeatherJokeAgent.java) for t
 ### Test the New Skills
 
 ```bash
-cp steps/Step10WeatherJokeAgent.java src/main/java/
-gradle run -PmainClass=Step10WeatherJokeAgent
+cp steps/Step10WeatherJokeAgent.java src/main/java/WeatherJokeAgent.java
+gradle run -PmainClass=WeatherJokeAgent
 ```
 
 Verify the skill functions appear in the SWML output alongside your existing tools. Call your number and try:
@@ -359,8 +361,8 @@ See [steps/Step11CompleteAgent.java](steps/Step11CompleteAgent.java) for the com
 ### Test Everything
 
 ```bash
-cp steps/Step11CompleteAgent.java src/main/java/
-gradle build && gradle run -PmainClass=Step11CompleteAgent
+cp steps/Step11CompleteAgent.java src/main/java/CompleteAgent.java
+gradle run -PmainClass=CompleteAgent
 ```
 
 Call your number and run through all the capabilities:
