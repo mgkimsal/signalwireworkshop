@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.signalwire:signalwire-agents:1.0.0'
+}
+
+application {
+    mainClass = 'Agent'
+}
+
+// Allow running any step file by class name:
+//   gradle run -PmainClass=Step04HelloAgent
+//   gradle run -PmainClass=Step11CompleteAgent
+if (project.hasProperty('mainClass')) {
+    application.mainClass = project.property('mainClass')
+}
+
+tasks.named('run') {
+    standardInput = System.in
+}
