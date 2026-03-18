@@ -223,6 +223,8 @@ install_deps() {
         else
             command -v perl &>/dev/null  || { missing_apt+=(perl); missing_names+=("perl"); }
             command -v cpanm &>/dev/null || { missing_apt+=(cpanminus); missing_names+=("cpanminus"); }
+            # libssl-dev needed to compile Net::SSLeay → IO::Socket::SSL
+            dpkg -s libssl-dev &>/dev/null 2>&1 || { missing_apt+=(libssl-dev); missing_names+=("libssl-dev"); }
         fi
     fi
 
