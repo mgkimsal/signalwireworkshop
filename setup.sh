@@ -296,10 +296,20 @@ if lang_enabled perl; then
         # Install cpanm if missing
         if ! command -v cpanm &>/dev/null; then
             info "Installing cpanminus..."
-            if curl -sL https://cpanmin.us | perl - --notest App::cpanminus 2>/dev/null; then
-                ok "cpanm installed"
+            if sudo -n true 2>/dev/null; then
+                # Have passwordless sudo — install system-wide (clean, no warnings)
+                if curl -sL https://cpanmin.us | sudo perl - --notest App::cpanminus 2>/dev/null; then
+                    ok "cpanm installed"
+                else
+                    warn "Could not install cpanm — run: sudo apt install cpanminus"
+                fi
             else
-                warn "Could not install cpanm — install manually: curl -L https://cpanmin.us | perl - App::cpanminus"
+                # No sudo — install to user home (may print warnings)
+                if curl -sL https://cpanmin.us | perl - --notest App::cpanminus 2>/dev/null; then
+                    ok "cpanm installed"
+                else
+                    warn "Could not install cpanm — run: sudo apt install cpanminus"
+                fi
             fi
         fi
 
