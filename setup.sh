@@ -556,36 +556,42 @@ fi
 if lang_enabled perl; then
     info "Setting up Perl..."
     if check_tool perl Perl; then
-        # Install cpanm if missing
-        if ! command -v cpanm &>/dev/null; then
-            info "Installing cpanminus..."
-            if sudo -n true 2>/dev/null; then
-                # Have passwordless sudo — install system-wide (clean, no warnings)
-                if curl -sL https://cpanmin.us | sudo perl - --notest App::cpanminus 2>/dev/null; then
-                    ok "cpanm installed"
-                else
-                    warn "Could not install cpanm — run: sudo apt install cpanminus"
-                fi
+        PERL_LOCAL="$SDK_DIR/signalwire-agents-perl/local"
+        PERL_LOCAL_BIN="$PERL_LOCAL/bin"
+        mkdir -p "$PERL_LOCAL_BIN"
+
+        # Find or bootstrap cpanm locally
+        CPANM=""
+        if command -v cpanm &>/dev/null; then
+            CPANM=cpanm
+        elif [ -x "$PERL_LOCAL_BIN/cpanm" ]; then
+            CPANM="$PERL_LOCAL_BIN/cpanm"
+        else
+            info "Downloading cpanm to $PERL_LOCAL_BIN..."
+            if curl -sL https://cpanmin.us -o "$PERL_LOCAL_BIN/cpanm" && chmod +x "$PERL_LOCAL_BIN/cpanm"; then
+                CPANM="$PERL_LOCAL_BIN/cpanm"
+                ok "cpanm bootstrapped locally"
             else
-                # No sudo — install to user home (may print warnings)
-                if curl -sL https://cpanmin.us | perl - --notest App::cpanminus 2>/dev/null; then
-                    ok "cpanm installed"
-                else
-                    warn "Could not install cpanm — run: sudo apt install cpanminus"
-                fi
+                warn "Could not download cpanm — install it: brew install cpanminus (macOS) or sudo apt install cpanminus (Linux)"
             fi
         fi
 
-        PERL_LOCAL="$SDK_DIR/signalwire-agents-perl/local"
-        if command -v cpanm &>/dev/null; then
-            cpanm --quiet --notest --local-lib "$PERL_LOCAL" --installdeps "$SDK_DIR/signalwire-agents-perl" 2>/dev/null || warn "cpanm installdeps for SDK failed"
-            (cd "$SCRIPT_DIR/perl" && cpanm --quiet --notest --local-lib "$PERL_LOCAL" --installdeps . 2>/dev/null) || warn "cpanm installdeps for workshop failed"
+        PERL_DEPS_OK=true
+        if [ -n "$CPANM" ]; then
+            $CPANM --quiet --notest --local-lib "$PERL_LOCAL" --installdeps "$SDK_DIR/signalwire-agents-perl" \
+                || { warn "cpanm installdeps for SDK failed — re-run without --quiet for details"; PERL_DEPS_OK=false; }
+            (cd "$SCRIPT_DIR/perl" && $CPANM --quiet --notest --local-lib "$PERL_LOCAL" --installdeps .) \
+                || { warn "cpanm installdeps for workshop failed"; PERL_DEPS_OK=false; }
+        else
+            PERL_DEPS_OK=false
         fi
 
         # Create symlink: perl/lib -> SDK lib directory
         ln -sfn "../sdks/signalwire-agents-perl/lib" "$SCRIPT_DIR/perl/lib"
         ok "Perl SDK symlinked at perl/lib"
-        ok "Perl deps installed to sdks/signalwire-agents-perl/local"
+        if [ "$PERL_DEPS_OK" = true ]; then
+            ok "Perl deps installed to $PERL_LOCAL"
+        fi
     fi
     echo ""
 fi
