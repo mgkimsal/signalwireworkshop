@@ -613,8 +613,13 @@ fi
 
 if lang_enabled java; then
     info "Setting up Java..."
+    # Prefer workshop's gradlew (Gradle 8.x) — the SDK ships Gradle 9.x
+    # which is incompatible with its maven-publish plugin
     GRADLE_CMD=""
-    if command -v gradle &>/dev/null; then
+    if [ -f "$SCRIPT_DIR/java/gradlew" ]; then
+        chmod +x "$SCRIPT_DIR/java/gradlew"
+        GRADLE_CMD="$SCRIPT_DIR/java/gradlew"
+    elif command -v gradle &>/dev/null; then
         GRADLE_CMD="gradle"
     elif [ -f "$SDK_DIR/signalwire-agents-java/gradlew" ]; then
         chmod +x "$SDK_DIR/signalwire-agents-java/gradlew"
