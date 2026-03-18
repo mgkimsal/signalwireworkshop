@@ -333,7 +333,7 @@ start_agent() {
             rm -f "$SCRIPT_DIR/java/src/main/java/"*.java
             mkdir -p "$SCRIPT_DIR/java/src/main/java"
             cp "$file" "$SCRIPT_DIR/java/src/main/java/${cls}.java"
-            (cd "$SCRIPT_DIR/java" && exec gradle run -PmainClass="$cls" --console=plain </dev/null) >>"$logfile" 2>&1 &
+            (cd "$SCRIPT_DIR/java" && exec ./gradlew run -PmainClass="$cls" --console=plain </dev/null) >>"$logfile" 2>&1 &
             ;;
         cpp)
             mkdir -p "$SCRIPT_DIR/cpp/build"
@@ -475,7 +475,7 @@ check_prereqs() {
             command -v perl &>/dev/null
             ;;
         java)
-            command -v gradle &>/dev/null || [ -x "$SCRIPT_DIR/java/gradlew" ]
+            [ -x "$SCRIPT_DIR/java/gradlew" ] || command -v gradle &>/dev/null
             ;;
         cpp)
             command -v cmake &>/dev/null && command -v make &>/dev/null
@@ -625,8 +625,8 @@ for lang in "${LANGS[@]}"; do
             fi
             if ! ls "$SCRIPT_DIR/java/libs/signalwire-agents-"*.jar &>/dev/null; then
                 info "Building Java SDK jar..."
-                gcmd="gradle"
-                [ -x "$SDK_DIR/signalwire-agents-java/gradlew" ] && gcmd="$SDK_DIR/signalwire-agents-java/gradlew"
+                gcmd="$SCRIPT_DIR/java/gradlew"
+                [ -x "$gcmd" ] || gcmd="gradle"
                 if (cd "$SDK_DIR/signalwire-agents-java" && $gcmd jar --console=plain -q 2>/dev/null); then
                     mkdir -p "$SCRIPT_DIR/java/libs"
                     cp "$SDK_DIR/signalwire-agents-java/build/libs/signalwire-agents-"*.jar "$SCRIPT_DIR/java/libs/"
