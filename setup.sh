@@ -721,7 +721,7 @@ printf "${BOLD}═════════════════════�
 printf "${GREEN}Setup complete for: ${LANGS[*]}${RESET}\n\n"
 
 printf "${BOLD}Next steps:${RESET}\n"
-local step=1
+step=1
 # Only mention .env if it still has placeholders or is empty
 if [ ! -f "$SCRIPT_DIR/.env" ] || grep -q "your-.*-here" "$SCRIPT_DIR/.env" 2>/dev/null; then
     echo "  $step. Edit .env with your SignalWire credentials and API keys"
