@@ -36,6 +36,18 @@ std::string check_ngrok() {
                     auto url = t.value("public_url", "");
                     setenv("SWML_PROXY_URL_BASE", url.c_str(), 1);
                     std::cout << "ngrok detected: " << url << "\n";
+                    auto* auth_user = std::getenv("SWML_BASIC_AUTH_USER");
+                    auto* auth_pass = std::getenv("SWML_BASIC_AUTH_PASSWORD");
+                    if (auth_user && auth_user[0] && auth_pass && auth_pass[0]) {
+                        auto scheme_end = url.find("://");
+                        auto host_start = scheme_end + 3;
+                        auto host_end = url.find('/', host_start);
+                        auto scheme = url.substr(0, scheme_end);
+                        auto host = url.substr(host_start, host_end == std::string::npos ? std::string::npos : host_end - host_start);
+                        std::cout << "\n  SignalWire SWML URL (paste into dashboard):\n  "
+                                  << scheme << "://" << auth_user << ":" << auth_pass << "@" << host << "/\n\n";
+                        std::cout << "  ⚠ Dev only — do not log credentials in production\n\n";
+                    }
                     return url;
                 }
             }

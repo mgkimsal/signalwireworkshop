@@ -29,6 +29,14 @@ def check_ngrok():
                 url = t["public_url"]
                 os.environ["SWML_PROXY_URL_BASE"] = url
                 print(f"ngrok detected: {url}")
+                user = os.getenv("SWML_BASIC_AUTH_USER", "")
+                pw = os.getenv("SWML_BASIC_AUTH_PASSWORD", "")
+                if user and pw:
+                    from urllib.parse import urlparse
+                    parsed = urlparse(url)
+                    full = f"{parsed.scheme}://{user}:{pw}@{parsed.netloc}/"
+                    print(f"\n  SignalWire SWML URL (paste into dashboard):\n  {full}\n")
+                    print("  ⚠ Dev only — do not log credentials in production\n")
                 return url
     except Exception:
         pass

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -34,6 +35,14 @@ func checkNgrok() string {
 				if t.Proto == "https" {
 					os.Setenv("SWML_PROXY_URL_BASE", t.PublicURL)
 					fmt.Println("ngrok detected:", t.PublicURL)
+					user := os.Getenv("SWML_BASIC_AUTH_USER")
+					pw := os.Getenv("SWML_BASIC_AUTH_PASSWORD")
+					if user != "" && pw != "" {
+						if parsed, err := url.Parse(t.PublicURL); err == nil {
+							fmt.Printf("\n  SignalWire SWML URL (paste into dashboard):\n  %s://%s:%s@%s/\n\n", parsed.Scheme, user, pw, parsed.Host)
+							fmt.Println("  ⚠ Dev only — do not log credentials in production")
+						}
+					}
 					return t.PublicURL
 				}
 			}

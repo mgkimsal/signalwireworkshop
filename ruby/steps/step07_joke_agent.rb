@@ -21,6 +21,13 @@ def check_ngrok
     url = t['public_url']
     ENV['SWML_PROXY_URL_BASE'] = url
     puts "ngrok detected: #{url}"
+    user = ENV['SWML_BASIC_AUTH_USER'].to_s
+    pw = ENV['SWML_BASIC_AUTH_PASSWORD'].to_s
+    unless user.empty? || pw.empty?
+      ngrok_uri = URI.parse(url)
+      puts "\n  SignalWire SWML URL (paste into dashboard):\n  #{ngrok_uri.scheme}://#{user}:#{pw}@#{ngrok_uri.host}/\n"
+      puts "  ⚠ Dev only — do not log credentials in production\n"
+    end
     return url
   end
 rescue StandardError

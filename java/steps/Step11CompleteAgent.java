@@ -62,6 +62,14 @@ public class CompleteAgent {
                         var url = (String) t.get("public_url");
                         System.setProperty("SWML_PROXY_URL_BASE", url);
                         System.out.println("ngrok detected: " + url);
+                        String authUser = System.getenv("SWML_BASIC_AUTH_USER");
+                        String authPass = System.getenv("SWML_BASIC_AUTH_PASSWORD");
+                        if (authUser != null && !authUser.isEmpty() && authPass != null && !authPass.isEmpty()) {
+                            URI uri = URI.create(url);
+                            System.out.printf("%n  SignalWire SWML URL (paste into dashboard):%n  %s://%s:%s@%s/%n%n",
+                                    uri.getScheme(), authUser, authPass, uri.getHost());
+                            System.out.println("  \u26a0 Dev only \u2014 do not log credentials in production\n");
+                        }
                         return;
                     }
                 }

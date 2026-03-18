@@ -18,6 +18,13 @@ async function checkNgrok(): Promise<string> {
       if (t.proto === 'https') {
         process.env['SWML_PROXY_URL_BASE'] = t.public_url;
         console.log(`ngrok detected: ${t.public_url}`);
+        const user = process.env['SWML_BASIC_AUTH_USER'] ?? '';
+        const pw = process.env['SWML_BASIC_AUTH_PASSWORD'] ?? '';
+        if (user && pw) {
+          const u = new URL(t.public_url);
+          console.log(`\n  SignalWire SWML URL (paste into dashboard):\n  ${u.protocol}//${user}:${pw}@${u.host}/\n`);
+          console.log('  ⚠ Dev only — do not log credentials in production\n');
+        }
         return t.public_url;
       }
     }

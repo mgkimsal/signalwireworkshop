@@ -40,6 +40,13 @@ sub check_ngrok {
                     my $url = $t->{public_url};
                     $ENV{SWML_PROXY_URL_BASE} = $url;
                     print "ngrok detected: $url\n";
+                    my $user = $ENV{SWML_BASIC_AUTH_USER} // '';
+                    my $pw   = $ENV{SWML_BASIC_AUTH_PASSWORD} // '';
+                    if ($user && $pw) {
+                        my ($scheme, $host) = $url =~ m{^(https?)://([^/]+)};
+                        print "\n  SignalWire SWML URL (paste into dashboard):\n  $scheme://$user:$pw\@$host/\n\n";
+                        print "  \x{26a0} Dev only \x{2014} do not log credentials in production\n\n";
+                    }
                     return $url;
                 }
             }
