@@ -199,7 +199,7 @@ nvm install 20
 The `apt` version of Go is usually too old. Install from the official tarball:
 
 ```bash
-GO_VERSION=1.23.6
+GO_VERSION=1.26.1
 # Detect architecture (amd64 or arm64)
 GO_ARCH=$(dpkg --print-architecture 2>/dev/null || echo "amd64")
 wget "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
