@@ -709,13 +709,17 @@ printf "${BOLD}═════════════════════�
 printf "${GREEN}Setup complete for: ${LANGS[*]}${RESET}\n\n"
 
 printf "${BOLD}Next steps:${RESET}\n"
-echo "  1. Edit .env with your SignalWire credentials and API keys"
-if ! command -v ngrok &>/dev/null; then
-    echo "  2. Install ngrok: https://ngrok.com/download"
-    echo "  3. Start tunnel:  ngrok http 3000"
-else
-    echo "  2. Start tunnel:  ngrok http 3000"
+local step=1
+# Only mention .env if it still has placeholders or is empty
+if [ ! -f "$SCRIPT_DIR/.env" ] || grep -q "your-.*-here" "$SCRIPT_DIR/.env" 2>/dev/null; then
+    echo "  $step. Edit .env with your SignalWire credentials and API keys"
+    step=$((step + 1))
 fi
+if ! command -v ngrok &>/dev/null; then
+    echo "  $step. Install ngrok: https://ngrok.com/download"
+    step=$((step + 1))
+fi
+echo "  $step. Start tunnel:  ngrok http 3000"
 echo ""
 printf "${BOLD}Run an agent:${RESET}\n"
 
@@ -733,6 +737,6 @@ done
 
 echo ""
 printf "${BOLD}Run tests:${RESET}\n"
-echo "  ./test.sh              # test all languages"
-echo "  ./test.sh python go    # test specific languages"
+echo "  ./test.sh"
+echo "  ./test.sh python go"
 echo ""
