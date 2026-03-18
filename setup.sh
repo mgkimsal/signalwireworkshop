@@ -198,7 +198,7 @@ check_ngrok() {
         ok "ngrok found"
     else
         warn "ngrok not found — agents need it to receive calls from SignalWire"
-        warn "Install: https://ngrok.com/download  or  brew install ngrok"
+        warn "Install: https://ngrok.com/download"
     fi
 }
 
@@ -339,6 +339,18 @@ if lang_enabled java; then
                     export JAVA_HOME="$brew_jdk"
                     export PATH="$JAVA_HOME/bin:$PATH"
                     info "Using brew openjdk: $JAVA_HOME"
+                    return 0
+                fi
+            fi
+            # Try /usr/lib/jvm on Linux
+            if [ -d /usr/lib/jvm ]; then
+                local jh
+                jh=$(find /usr/lib/jvm -maxdepth 1 -type d \( -name '*java-2[1-9]*' -o -name '*java-[3-9][0-9]*' \) 2>/dev/null \
+                    | sort -V | tail -1)
+                if [ -n "$jh" ] && [ -d "$jh" ]; then
+                    export JAVA_HOME="$jh"
+                    export PATH="$JAVA_HOME/bin:$PATH"
+                    info "Using Java from /usr/lib/jvm: $JAVA_HOME"
                     return 0
                 fi
             fi

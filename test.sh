@@ -66,6 +66,19 @@ fail()  {
 }
 skip()  { printf "${YELLOW}[SKIP]${RESET}  %s\n" "$*"; ((SKIP++)); }
 
+# Portable "find PIDs on a TCP port" — works on macOS + Linux + WSL
+_pids_on_port() {
+    local port="$1"
+    if command -v lsof &>/dev/null; then
+        lsof -ti :"$port" 2>/dev/null || true
+    elif command -v ss &>/dev/null; then
+        ss -tlnp "sport = :$port" 2>/dev/null \
+            | grep -o 'pid=[0-9]*' | cut -d= -f2 || true
+    elif command -v fuser &>/dev/null; then
+        fuser "$port/tcp" 2>/dev/null | tr -s ' ' '\n' | grep -o '[0-9]*' || true
+    fi
+}
+
 wait_for_port() {
     local port="$1" seconds="$2" agent_pid="${3:-}"
     for ((i=0; i<seconds; i++)); do
@@ -91,7 +104,7 @@ kill_agent() {
     fi
     # Belt-and-suspenders: kill anything still on our port
     local leftover
-    leftover=$(lsof -ti :"$PORT" 2>/dev/null || true)
+    leftover=$(_pids_on_port "$PORT")
     if [ -n "$leftover" ]; then
         kill $leftover 2>/dev/null || true
         sleep 1
@@ -100,13 +113,13 @@ kill_agent() {
 
 ensure_port_free() {
     local pid
-    pid=$(lsof -ti :"$PORT" 2>/dev/null || true)
+    pid=$(_pids_on_port "$PORT")
     if [ -n "$pid" ]; then
         printf "${YELLOW}[WARN]${RESET}  Port %s in use (pid %s) — killing\n" "$PORT" "$pid"
         kill $pid 2>/dev/null || true
         sleep 1
         # Check again
-        pid=$(lsof -ti :"$PORT" 2>/dev/null || true)
+        pid=$(_pids_on_port "$PORT")
         if [ -n "$pid" ]; then
             kill -9 $pid 2>/dev/null || true
             sleep 1
@@ -543,6 +556,15 @@ for lang in "${LANGS[@]}"; do
                 brew_jdk="$(brew --prefix openjdk 2>/dev/null)/libexec/openjdk.jdk/Contents/Home"
                 if [ -d "$brew_jdk" ]; then
                     export JAVA_HOME="$brew_jdk"
+                    export PATH="$JAVA_HOME/bin:$PATH"
+                fi
+            fi
+            # Auto-detect Java 21+ on Linux
+            if [ -d /usr/lib/jvm ]; then
+                linux_jdk=$(find /usr/lib/jvm -maxdepth 1 -type d \( -name '*java-2[1-9]*' -o -name '*java-[3-9][0-9]*' \) 2>/dev/null \
+                    | sort -V | tail -1)
+                if [ -n "$linux_jdk" ] && [ -d "$linux_jdk" ]; then
+                    export JAVA_HOME="$linux_jdk"
                     export PATH="$JAVA_HOME/bin:$PATH"
                 fi
             fi

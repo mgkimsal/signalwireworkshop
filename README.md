@@ -28,8 +28,9 @@ And you'll learn three different ways to give your agent capabilities:
 
 Before we start, make sure you have:
 
-- [ ] Your **language runtime** installed (Python 3.9+, Node.js 18+, Ruby 3.0+, Go 1.21+, Perl 5.20+, Java 17+, or a C++17 compiler)
-- [ ] A **terminal** (Terminal on Mac, Command Prompt or WSL on Windows)
+- [ ] **git** installed
+- [ ] Your **language runtime** installed (see the [Platform Setup Guide](#platform-setup-guide) below for exact versions and install commands)
+- [ ] A **terminal** -- Terminal/iTerm2 on macOS, any terminal on Linux, or **Windows Terminal + WSL2** on Windows
 - [ ] A **text editor** or IDE you're comfortable with
 - [ ] A **web browser** for signing up for services
 - [ ] A **phone** to call your agent when it's live
@@ -40,12 +41,417 @@ No prior experience with voice, telephony, or AI APIs is needed. If you can writ
 
 This workshop is split into two parts:
 
-1. **Shared setup** (this README) -- covers SignalWire account creation, API keys, and ngrok. Every language needs this.
+1. **Shared setup** (this README) -- covers platform setup, SignalWire account creation, API keys, and ngrok. Every language needs this.
 2. **Language-specific guide** -- covers project setup, coding, testing, and deployment for your chosen language.
 
 Each section builds on the last. You'll write code, test it, and hit a checkpoint before moving on. If something isn't working at a checkpoint, stop and troubleshoot before continuing -- every section depends on the one before it.
 
 Let's get started.
+
+---
+
+## Platform Setup Guide
+
+This section walks you through setting up your development environment on **macOS**, **Linux (Ubuntu/Debian)**, or **Windows via WSL2**. You only need to follow the subsection for your platform. Once your environment is ready, the `setup.sh` script handles cloning SDKs, installing dependencies, and wiring everything together.
+
+### Supported Language Versions
+
+| Language | Minimum Version | Recommended |
+|----------|----------------|-------------|
+| Python | 3.10+ | 3.12 |
+| Node.js (TypeScript) | 18+ | 20 LTS |
+| Go | 1.22+ | 1.23 |
+| Ruby | 3.0+ | 3.3 |
+| Perl | 5.20+ | 5.38 |
+| Java | 21+ | 21 LTS |
+| C++ | C++17 compiler | GCC 12+ or Clang 15+ |
+
+You only need the runtime(s) for the language(s) you plan to use. Most people pick one or two.
+
+---
+
+### macOS
+
+macOS is the most straightforward platform. All tools are available through [Homebrew](https://brew.sh/).
+
+#### 1. Install Xcode Command Line Tools
+
+```bash
+xcode-select --install
+```
+
+If you already have them, this will say so. These provide `git`, `make`, `clang`, and other essentials.
+
+#### 2. Install Homebrew (if not already installed)
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+After installing, follow the instructions it prints to add Homebrew to your PATH.
+
+#### 3. Install Language Runtimes
+
+Install only the languages you plan to use:
+
+```bash
+# Python
+brew install python@3.12
+
+# Node.js (for TypeScript)
+brew install node@20
+
+# Go
+brew install go
+
+# Ruby
+brew install ruby
+
+# Perl (ships with macOS, but brew gives you a newer version + cpanm)
+brew install perl
+brew install cpanminus
+
+# Java 21
+brew install openjdk@21
+
+# C++ (clang ships with Xcode CLT; cmake is needed for the build)
+brew install cmake
+```
+
+#### 4. Java PATH Setup (if using Java)
+
+Homebrew's OpenJDK isn't on the system PATH by default. The `setup.sh` and `test.sh` scripts auto-detect it, but if you want it available everywhere:
+
+```bash
+# Add to your ~/.zshrc or ~/.bash_profile:
+export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
+export PATH="$JAVA_HOME/bin:$PATH"
+```
+
+#### 5. Install jq (required for test.sh)
+
+```bash
+brew install jq
+```
+
+#### 6. Clone and Run Setup
+
+```bash
+git clone https://github.com/signalwire-demos/workshop.git workshop
+cd workshop
+./setup.sh              # all languages
+./setup.sh python go    # or pick specific ones
+```
+
+---
+
+### Linux (Ubuntu / Debian)
+
+These instructions target Ubuntu 22.04+ and Debian 12+, which are also the most common WSL distributions. Other distributions will need equivalent packages from their package managers.
+
+#### 1. Install Base Dependencies
+
+```bash
+sudo apt update
+sudo apt install -y git curl wget jq build-essential
+```
+
+This gives you `git`, `curl`, `jq`, `make`, `gcc`, `g++`, and standard build tools.
+
+#### 2. Install Language Runtimes
+
+Install only the languages you plan to use:
+
+**Python:**
+
+```bash
+sudo apt install -y python3 python3-venv python3-pip
+```
+
+On Ubuntu 22.04 this gives Python 3.10; on Ubuntu 24.04 it gives 3.12. Both work.
+
+> **If `python3 -m venv` fails** with `ensurepip is not available`, install the version-specific venv package:
+> ```bash
+> # Check your Python version, then install the matching venv package:
+> python3 --version                          # e.g. Python 3.12.x
+> sudo apt install -y python3.12-venv        # match the major.minor
+> ```
+
+**Node.js (for TypeScript):**
+
+The default `apt` Node.js package is often too old. Use NodeSource:
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+Or use [nvm](https://github.com/nvm-sh/nvm) if you prefer to manage Node versions:
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+source ~/.bashrc
+nvm install 20
+```
+
+**Go:**
+
+The `apt` version of Go is usually too old. Install from the official tarball:
+
+```bash
+GO_VERSION=1.23.6
+wget "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
+sudo rm -rf /usr/local/go
+sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
+rm "go${GO_VERSION}.linux-amd64.tar.gz"
+
+# Add to ~/.bashrc or ~/.zshrc:
+export PATH="/usr/local/go/bin:$PATH"
+```
+
+Reload your shell (`source ~/.bashrc`) and verify: `go version`
+
+**Ruby:**
+
+```bash
+sudo apt install -y ruby-full
+sudo gem install bundler
+```
+
+**Perl:**
+
+```bash
+sudo apt install -y perl cpanminus
+```
+
+Perl ships with Ubuntu, but `cpanminus` makes dependency installation painless.
+
+**Java 21:**
+
+```bash
+sudo apt install -y openjdk-21-jdk
+```
+
+If your Ubuntu version doesn't have `openjdk-21-jdk`, add the Adoptium repository:
+
+```bash
+sudo apt install -y wget apt-transport-https
+wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | sudo tee /etc/apt/keyrings/adoptium.asc
+echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(. /etc/os-release && echo "$VERSION_CODENAME") main" \
+  | sudo tee /etc/apt/sources.list.d/adoptium.list
+sudo apt update
+sudo apt install -y temurin-21-jdk
+```
+
+You also need Gradle. The easiest way is [SDKMAN](https://sdkman.io/):
+
+```bash
+curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+sdk install gradle
+```
+
+Or use the `gradlew` wrapper included in the Java SDK (the setup script handles this automatically).
+
+**C++:**
+
+```bash
+sudo apt install -y cmake g++ libcurl4-openssl-dev nlohmann-json3-dev
+```
+
+The C++ SDK uses CMake and depends on libcurl and nlohmann-json.
+
+#### 3. Verify Installations
+
+```bash
+python3 --version    # 3.10+
+node --version       # 18+
+go version           # 1.22+
+ruby --version       # 3.0+
+perl --version       # 5.20+
+java --version       # 21+
+cmake --version      # 3.16+
+```
+
+#### 4. Clone and Run Setup
+
+```bash
+git clone https://github.com/signalwire-demos/workshop.git workshop
+cd workshop
+./setup.sh              # all languages
+./setup.sh python go    # or pick specific ones
+```
+
+> **Note on port utilities:** Some minimal Linux installs don't include `lsof`. The workshop scripts automatically fall back to `ss` (included in all modern Linux distributions) for port detection, so this is handled for you. No extra packages needed.
+
+---
+
+### Windows (WSL2)
+
+Windows users must use **Windows Subsystem for Linux (WSL2)** -- the workshop scripts are bash and won't run in PowerShell or CMD. WSL2 runs a real Linux kernel and has near-native performance.
+
+#### 1. Install WSL2
+
+Open **PowerShell as Administrator**. First, see what distros are available:
+
+```powershell
+wsl -l --online
+```
+
+Pick one (Ubuntu-24.04 is recommended) and install it:
+
+```powershell
+wsl --install Ubuntu-24.04
+```
+
+Restart your computer when prompted. After restarting, the Ubuntu terminal will open and ask you to create a username and password. Do so -- this is your Linux user account.
+
+> **Already have WSL with an older distro?** Check what's installed and which WSL version it's using:
+> ```powershell
+> wsl -l -v
+> ```
+> If the VERSION column shows `1`, upgrade it to WSL2. Use the exact name from the NAME column:
+> ```powershell
+> wsl --set-version Ubuntu-24.04 2
+> ```
+
+#### 2. Open Your WSL Terminal
+
+You can use any of these:
+- **Windows Terminal** (recommended) -- open it and select the Ubuntu tab
+- **Ubuntu** app from the Start menu
+- VS Code's integrated terminal with the [WSL extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl)
+
+Everything from this point forward happens inside the WSL terminal, not PowerShell.
+
+#### 3. Install Dependencies
+
+Follow the **Linux (Ubuntu / Debian)** instructions above in their entirety. WSL2 Ubuntu is a full Ubuntu distribution -- every command works identically.
+
+```bash
+# Start with base dependencies
+sudo apt update
+sudo apt install -y git curl wget jq build-essential
+
+# Then install your chosen language runtimes (see Linux section above)
+```
+
+#### 4. Clone the Repository -- MUST Be Inside WSL's Filesystem
+
+> **STOP -- read this before you clone.** Do NOT clone into `/mnt/c/...` (your Windows drives). It will fail with permission errors like `chmod on .git/config.lock failed: Operation not permitted`, and even if you work around that, I/O will be 5-10x slower. Always clone into your WSL home directory (`~`).
+
+```bash
+cd ~
+git clone https://github.com/signalwire-demos/workshop.git workshop
+cd workshop
+```
+
+If you're currently in a `/mnt/c/` path, just `cd ~` first. Your WSL home directory lives on the Linux filesystem where everything works normally.
+
+> **If you already cloned onto `/mnt/c/`**, delete that copy and re-clone into `~`:
+> ```bash
+> rm -rf /mnt/c/Users/yourname/Desktop/workshop   # delete the broken clone
+> cd ~
+> git clone https://github.com/signalwire-demos/workshop.git workshop
+> ```
+
+> **If you cloned with Windows Git** (outside WSL) and see `/bin/bash^M: bad interpreter` errors, that's CRLF line endings. Fix it from inside WSL:
+> ```bash
+> sudo apt install -y dos2unix
+> dos2unix setup.sh test.sh
+> ```
+
+#### 5. Run Setup
+
+```bash
+./setup.sh              # all languages
+./setup.sh python go    # or pick specific ones
+```
+
+#### 6. WSL Networking
+
+WSL2 shares your Windows machine's network. Ports opened in WSL are accessible from Windows and vice versa:
+
+- Your agent running on port 3000 in WSL is accessible at `http://localhost:3000` from a Windows browser
+- ngrok running inside WSL can tunnel `localhost:3000` normally
+- If localhost doesn't work (rare, some older WSL2 builds), try the WSL IP: `ip addr show eth0 | grep inet`
+
+#### 7. File Editing
+
+You can edit WSL files from Windows using VS Code:
+
+```bash
+# From inside your WSL workshop directory:
+code .
+```
+
+This opens VS Code with the WSL extension, editing files directly on the Linux filesystem. Don't use Windows Notepad or other editors that save with CRLF.
+
+---
+
+### What `setup.sh` Does
+
+The `setup.sh` script automates the entire SDK setup process. Here's what it does for each language:
+
+| Step | What Happens |
+|------|-------------|
+| **Environment** | Creates `.env` from your inputs (API keys, credentials) and symlinks it into each language directory |
+| **Clone SDKs** | Shallow-clones each SDK repo into `sdks/` |
+| **Python** | Creates a venv, installs the SDK in editable mode |
+| **TypeScript** | Runs `npm install` and `npm run build` for the SDK, then `npm install` in the workshop dir |
+| **Go** | Runs `go mod tidy` (the SDK is linked via `go.mod` replace directive) |
+| **Ruby** | Runs `bundle install` (the SDK is linked via Gemfile path directive) |
+| **Perl** | Installs cpanm if missing, installs deps to the SDK's `local/` directory, symlinks `perl/lib` to the SDK |
+| **Java** | Auto-detects Java 21 (Homebrew on macOS, `/usr/lib/jvm` on Linux, `JAVA_HOME`, or system default), builds the SDK jar with Gradle, copies it to `java/libs/` |
+| **C++** | Builds the SDK static library with CMake |
+
+You can run it for all languages or just the ones you need:
+
+```bash
+./setup.sh                     # everything
+./setup.sh python typescript   # just these two
+./setup.sh java                # just Java
+```
+
+If you hit a problem with one language, fix it and re-run `setup.sh` for just that language -- it's safe to run multiple times.
+
+---
+
+### Running Tests
+
+After setup, verify everything works:
+
+```bash
+./test.sh                      # test all languages
+./test.sh python               # test one language
+./test.sh python typescript    # test specific languages
+STEPS="04 06" ./test.sh go     # test specific steps
+```
+
+The test script uses `swaig-test` (a CLI tool bundled with each SDK) to validate your agents produce correct SWML output and expose the right functions. File-based languages (Python, TypeScript) are tested without a server; URL-based languages (Go, Ruby, Perl, Java, C++) start the agent, test it over HTTP, and shut it down.
+
+---
+
+### Platform-Specific Troubleshooting
+
+| Problem | Platform | Solution |
+|---------|----------|----------|
+| `command not found: brew` | macOS | Install Homebrew (see above), then restart your terminal |
+| `python3: command not found` | Linux/WSL | `sudo apt install python3 python3-venv python3-pip` |
+| `ensurepip is not available` (venv creation fails) | Linux/WSL | `sudo apt install python3.XX-venv` — replace `XX` with your Python minor version (e.g. `python3.12-venv`) |
+| `chmod on .git/config.lock failed: Operation not permitted` | WSL | You cloned onto `/mnt/c/`. Delete it and re-clone into `~` (see WSL section above) |
+| `node: command not found` after installing | Linux/WSL | If using nvm, run `source ~/.bashrc`; if using NodeSource, check `/usr/bin/node` exists |
+| `go: command not found` after installing | Linux/WSL | Add `export PATH="/usr/local/go/bin:$PATH"` to `~/.bashrc` and `source ~/.bashrc` |
+| Java version too old | Linux/WSL | `sudo apt install openjdk-21-jdk` or use Adoptium (see above); `setup.sh` scans `/usr/lib/jvm` automatically |
+| Java version too old | macOS | `brew install openjdk@21`; `setup.sh` auto-detects brew OpenJDK |
+| `/bin/bash^M: bad interpreter` | WSL | Line ending issue. Run `dos2unix setup.sh test.sh` or re-clone from inside WSL |
+| Port 3000 already in use | All | `test.sh` handles this automatically. Manual fix: `lsof -ti :3000 \| xargs kill` (macOS) or `ss -tlnp sport = :3000` to find the PID (Linux) |
+| `lsof: command not found` | Linux/WSL | Not a problem -- the scripts fall back to `ss` automatically |
+| `cmake: command not found` | Linux/WSL | `sudo apt install cmake` |
+| `gradle: command not found` | Linux/WSL | Use SDKMAN (`sdk install gradle`) or let `setup.sh` use the bundled `gradlew` wrapper |
+| Slow `npm install` or `go mod tidy` | WSL | Make sure you cloned inside WSL's filesystem (`~/workshop`), not on `/mnt/c/` |
+| `localhost:3000` not reachable from Windows | WSL | Try `curl localhost:3000` from inside WSL first. If that works but the Windows browser can't reach it, check your WSL version (`wsl -l -v` should show VERSION 2) |
+| Permission denied running `setup.sh` | All | `chmod +x setup.sh test.sh` |
 
 ---
 
@@ -152,19 +558,16 @@ Your agent will run locally, but SignalWire's cloud can't reach `localhost`. We 
 brew install ngrok
 ```
 
-**Linux:**
+**Linux / WSL:**
 ```bash
 curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
   | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
-  && echo "deb https://ngrok-agent.s3.amazonaws.com ngrok main" \
+  && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
   | sudo tee /etc/apt/sources.list.d/ngrok.list \
   && sudo apt update && sudo apt install ngrok
 ```
 
-**Windows:**
-```bash
-choco install ngrok
-```
+> **Windows users:** Install ngrok inside your WSL terminal using the Linux command above — not with `choco` or the Windows installer. Your agent runs in WSL, so ngrok needs to be there too.
 
 Or download directly from [ngrok.com/download](https://ngrok.com/download).
 
