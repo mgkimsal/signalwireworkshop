@@ -230,12 +230,19 @@ if lang_enabled python; then
         if check_version python3 "3.10" "$pyver" Python; then
             if [ ! -d "$SCRIPT_DIR/python/venv" ]; then
                 info "Creating Python venv..."
-                python3 -m venv "$SCRIPT_DIR/python/venv"
+                if ! python3 -m venv "$SCRIPT_DIR/python/venv"; then
+                    err "Failed to create venv — on Ubuntu/Debian, install: sudo apt install python3-venv python3.${pyver#*.}-venv"
+                    PYTHON_OK=false
+                fi
             fi
-            source "$SCRIPT_DIR/python/venv/bin/activate"
-            pip install -q -r "$SCRIPT_DIR/python/requirements.txt"
-            pip install -q -e "$SDK_DIR/signalwire-agents-python"
-            ok "Python SDK installed (editable mode) — activate with: source python/venv/bin/activate"
+            if [ "${PYTHON_OK:-true}" = false ] || [ ! -f "$SCRIPT_DIR/python/venv/bin/activate" ]; then
+                warn "Skipping Python setup (venv not available)"
+            else
+                source "$SCRIPT_DIR/python/venv/bin/activate"
+                pip install -q -r "$SCRIPT_DIR/python/requirements.txt"
+                pip install -q -e "$SDK_DIR/signalwire-agents-python"
+                ok "Python SDK installed (editable mode) — activate with: source python/venv/bin/activate"
+            fi
         fi
     fi
     echo ""
