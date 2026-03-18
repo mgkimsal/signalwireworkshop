@@ -25,7 +25,18 @@ if [ $# -gt 0 ]; then
         case "$arg" in
             --auto) AUTO_INSTALL=true ;;
             -*)     echo "Unknown flag: $arg" >&2; exit 1 ;;
-            *)      LANGS+=("$arg") ;;
+            *)
+                # Validate language name
+                valid=false
+                for l in "${ALL_LANGS[@]}"; do [[ "$l" == "$arg" ]] && valid=true; done
+                if [ "$valid" = true ]; then
+                    LANGS+=("$arg")
+                else
+                    echo "Unknown language: $arg" >&2
+                    echo "Valid languages: ${ALL_LANGS[*]}" >&2
+                    exit 1
+                fi
+                ;;
         esac
     done
     if [ ${#LANGS[@]} -eq 0 ]; then

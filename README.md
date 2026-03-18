@@ -93,11 +93,10 @@ After installing, follow the instructions it prints to add Homebrew to your PATH
 ```bash
 git clone https://github.com/signalwire-demos/workshop.git workshop
 cd workshop
-./setup.sh              # all languages
-./setup.sh python go    # or pick specific ones
+./setup.sh python go
 ```
 
-`setup.sh` detects missing dependencies and offers to `brew install` them for you.
+Pass the languages you want, or run `./setup.sh` with no arguments for all of them. `setup.sh` detects missing dependencies and offers to `brew install` them for you.
 
 > **Java PATH note:** If using Java, Homebrew's OpenJDK isn't on the system PATH by default. The `setup.sh` and `test.sh` scripts auto-detect it, but if you want it available everywhere, add to `~/.zshrc`:
 > ```bash
@@ -115,11 +114,10 @@ These instructions target Ubuntu 22.04+ and Debian 12+, which are also the most 
 sudo apt update
 git clone https://github.com/signalwire-demos/workshop.git workshop
 cd workshop
-./setup.sh              # all languages
-./setup.sh python go    # or pick specific ones
+./setup.sh python go
 ```
 
-`setup.sh` detects missing dependencies and offers to `apt install` them for you. For Go and Node.js, it installs from official sources (Go tarball, NodeSource PPA) since the default apt versions are often too old.
+Pass the languages you want, or run `./setup.sh` with no arguments for all of them. `setup.sh` detects missing dependencies and offers to `apt install` them for you. For Go and Node.js, it installs from official sources (Go tarball, NodeSource PPA) since the default apt versions are often too old.
 
 > **Note on port utilities:** Some minimal Linux installs don't include `lsof`. The workshop scripts automatically fall back to `ss` (included in all modern Linux distributions) for port detection, so this is handled for you.
 
@@ -150,11 +148,10 @@ cd ~
 sudo apt update
 git clone https://github.com/signalwire-demos/workshop.git workshop
 cd workshop
-./setup.sh              # all languages
-./setup.sh python go    # or pick specific ones
+./setup.sh python go
 ```
 
-`setup.sh` detects missing dependencies (including base tools like `git`, `curl`, `jq`, `build-essential`) and offers to install them. It also checks for CRLF line endings and `/mnt/c/` paths automatically.
+Pass the languages you want, or run `./setup.sh` with no arguments for all of them. `setup.sh` detects missing dependencies (including base tools like `git`, `curl`, `jq`, `build-essential`) and offers to install them. It also checks for CRLF line endings and `/mnt/c/` paths automatically.
 
 #### WSL Tips
 
@@ -242,9 +239,9 @@ The `setup.sh` script automates the entire SDK setup process. Here's what it doe
 You can run it for all languages or just the ones you need:
 
 ```bash
-./setup.sh                     # everything
-./setup.sh python typescript   # just these two
-./setup.sh java                # just Java
+./setup.sh
+./setup.sh python typescript
+./setup.sh java
 ```
 
 If you hit a problem with one language, fix it and re-run `setup.sh` for just that language -- it's safe to run multiple times.
@@ -256,10 +253,10 @@ If you hit a problem with one language, fix it and re-run `setup.sh` for just th
 After setup, verify everything works:
 
 ```bash
-./test.sh                      # test all languages
-./test.sh python               # test one language
-./test.sh python typescript    # test specific languages
-STEPS="04 06" ./test.sh go     # test specific steps
+./test.sh
+./test.sh python
+./test.sh python typescript
+STEPS="04 06" ./test.sh go
 ```
 
 The test script uses `swaig-test` (a CLI tool bundled with each SDK) to validate your agents produce correct SWML output and expose the right functions. File-based languages (Python, TypeScript) are tested without a server; URL-based languages (Go, Ruby, Perl, Java, C++) start the agent, test it over HTTP, and shut it down.
