@@ -200,14 +200,18 @@ The `apt` version of Go is usually too old. Install from the official tarball:
 
 ```bash
 GO_VERSION=1.23.6
-wget "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
+# Detect architecture (amd64 or arm64)
+GO_ARCH=$(dpkg --print-architecture 2>/dev/null || echo "amd64")
+wget "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
 sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
-rm "go${GO_VERSION}.linux-amd64.tar.gz"
+sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+rm "go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
 
 # Add to ~/.bashrc or ~/.zshrc:
 export PATH="/usr/local/go/bin:$PATH"
 ```
+
+> **ARM64 users (Apple Silicon via WSL, Ampere VMs, etc.):** The commands above auto-detect your architecture. If you previously installed the wrong (amd64) binary and get `cannot execute binary file: Exec format error`, re-run the commands above — they'll replace it with the correct one.
 
 Reload your shell (`source ~/.bashrc`) and verify: `go version`
 
@@ -442,6 +446,8 @@ The test script uses `swaig-test` (a CLI tool bundled with each SDK) to validate
 | `chmod on .git/config.lock failed: Operation not permitted` | WSL | You cloned onto `/mnt/c/`. Delete it and re-clone into `~` (see WSL section above) |
 | `node: command not found` after installing | Linux/WSL | If using nvm, run `source ~/.bashrc`; if using NodeSource, check `/usr/bin/node` exists |
 | `go: command not found` after installing | Linux/WSL | Add `export PATH="/usr/local/go/bin:$PATH"` to `~/.bashrc` and `source ~/.bashrc` |
+| `cannot execute binary file: Exec format error` (Go) | Linux/WSL | Wrong architecture — you installed amd64 on arm64 or vice versa. Re-install using the auto-detect commands in the Go section above |
+| `Could not find gem 'dotenv'` (Ruby) | Linux/WSL | Run `./setup.sh ruby` — bundler hasn't installed gems yet |
 | Java version too old | Linux/WSL | `sudo apt install openjdk-21-jdk` or use Adoptium (see above); `setup.sh` scans `/usr/lib/jvm` automatically |
 | Java version too old | macOS | `brew install openjdk@21`; `setup.sh` auto-detects brew OpenJDK |
 | `/bin/bash^M: bad interpreter` | WSL | Line ending issue. Run `dos2unix setup.sh test.sh` or re-clone from inside WSL |
