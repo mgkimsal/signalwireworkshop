@@ -33,7 +33,8 @@ ALL_STEPS=(04 06 07 08 09 10 11)
 # Override via env or args
 STEPS=("${STEPS[@]:-${ALL_STEPS[@]}}")
 if [ $# -gt 0 ]; then
-    LANGS=("$@")
+    LANGS=()
+    for arg in "$@"; do LANGS+=("${arg%/}"); done
 else
     LANGS=("${ALL_LANGS[@]}")
 fi

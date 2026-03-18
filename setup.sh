@@ -26,7 +26,8 @@ if [ $# -gt 0 ]; then
             --auto) AUTO_INSTALL=true ;;
             -*)     echo "Unknown flag: $arg" >&2; exit 1 ;;
             *)
-                # Validate language name
+                # Strip trailing slash (e.g. "java/" → "java") and validate
+                arg="${arg%/}"
                 valid=false
                 for l in "${ALL_LANGS[@]}"; do [[ "$l" == "$arg" ]] && valid=true; done
                 if [ "$valid" = true ]; then
