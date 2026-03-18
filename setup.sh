@@ -7,6 +7,7 @@
 # Usage:
 #   ./setup.sh                 # set up all languages
 #   ./setup.sh python go       # set up specific languages only
+#   ./setup.sh --auto python   # auto-install missing deps (no prompt)
 #
 set -euo pipefail
 
@@ -16,9 +17,20 @@ REPO_BASE="https://github.com/signalwire"
 
 ALL_LANGS=(python typescript go ruby perl java cpp)
 
-# If arguments given, only set up those languages; otherwise all
+# Parse flags and language arguments
+AUTO_INSTALL=false
 if [ $# -gt 0 ]; then
-    LANGS=("$@")
+    LANGS=()
+    for arg in "$@"; do
+        case "$arg" in
+            --auto) AUTO_INSTALL=true ;;
+            -*)     echo "Unknown flag: $arg" >&2; exit 1 ;;
+            *)      LANGS+=("$arg") ;;
+        esac
+    done
+    if [ ${#LANGS[@]} -eq 0 ]; then
+        LANGS=("${ALL_LANGS[@]}")
+    fi
 else
     LANGS=("${ALL_LANGS[@]}")
 fi
@@ -73,6 +85,255 @@ clone_sdk() {
         info "Cloning signalwire-agents-${lang}..."
         git clone --depth 1 "${REPO_BASE}/signalwire-agents-${lang}.git" "$target"
     fi
+}
+
+# ── Platform Detection ──────────────────────────────────────────────────────
+
+_detect_platform() {
+    case "$(uname -s)" in
+        Darwin) PLATFORM=macos ;;
+        Linux)  PLATFORM=linux ;;
+        *)      PLATFORM=unknown ;;
+    esac
+}
+
+_has_brew() { command -v brew &>/dev/null; }
+_has_apt()  { command -v apt-get &>/dev/null; }
+
+# ── WSL Checks ──────────────────────────────────────────────────────────────
+
+_wsl_checks() {
+    [ "$PLATFORM" = linux ] || return 0
+    grep -qi microsoft /proc/version 2>/dev/null || return 0
+
+    # Warn if running from /mnt/c/
+    if [[ "$SCRIPT_DIR" == /mnt/* ]]; then
+        warn "Running from Windows filesystem ($SCRIPT_DIR)"
+        warn "This will be slow and may cause permission errors."
+        warn "Recommendation: cd ~ && git clone <repo> workshop && cd workshop"
+        echo ""
+    fi
+
+    # Check for CRLF line endings
+    if head -1 "$0" | grep -q $'\r'; then
+        warn "setup.sh has Windows (CRLF) line endings"
+        if command -v dos2unix &>/dev/null; then
+            info "Fixing with dos2unix..."
+            dos2unix "$0" 2>/dev/null
+            warn "Fixed! Please re-run: ./setup.sh ${LANGS[*]}"
+            exit 1
+        else
+            warn "Fix with: sudo apt install -y dos2unix && dos2unix setup.sh test.sh"
+            exit 1
+        fi
+    fi
+}
+
+# ── Dependency Installer ────────────────────────────────────────────────────
+
+install_deps() {
+    _detect_platform
+    if [ "$PLATFORM" = unknown ]; then
+        warn "Unknown platform ($(uname -s)) — skipping dependency check"
+        return 0
+    fi
+
+    _wsl_checks
+
+    local missing_brew=()
+    local missing_apt=()
+    local need_node=false
+    local need_go=false
+    local need_bundler=false
+    local missing_names=()
+
+    # ── Base tools (always checked) ──
+    if [ "$PLATFORM" = macos ]; then
+        command -v jq &>/dev/null || { missing_brew+=(jq); missing_names+=("jq"); }
+    else
+        for tool in git curl wget jq; do
+            command -v "$tool" &>/dev/null || { missing_apt+=("$tool"); missing_names+=("$tool"); }
+        done
+        dpkg -s build-essential &>/dev/null 2>&1 || { missing_apt+=(build-essential); missing_names+=("build-essential"); }
+    fi
+
+    # ── Per-language checks ──
+    if lang_enabled python; then
+        if ! command -v python3 &>/dev/null; then
+            if [ "$PLATFORM" = macos ]; then
+                missing_brew+=(python@3.12); missing_names+=("python@3.12")
+            else
+                missing_apt+=(python3 python3-venv python3-pip); missing_names+=("python3 + venv/pip")
+            fi
+        elif [ "$PLATFORM" = linux ]; then
+            dpkg -s python3-venv &>/dev/null 2>&1 || { missing_apt+=(python3-venv); missing_names+=("python3-venv"); }
+            dpkg -s python3-pip &>/dev/null 2>&1  || { missing_apt+=(python3-pip); missing_names+=("python3-pip"); }
+        fi
+    fi
+
+    if lang_enabled typescript; then
+        if ! command -v node &>/dev/null; then
+            if [ "$PLATFORM" = macos ]; then
+                missing_brew+=(node@20); missing_names+=("node@20")
+            else
+                need_node=true; missing_names+=("nodejs 20 (via NodeSource)")
+            fi
+        fi
+    fi
+
+    if lang_enabled go; then
+        if ! command -v go &>/dev/null; then
+            if [ "$PLATFORM" = macos ]; then
+                missing_brew+=(go); missing_names+=("go")
+            else
+                need_go=true; missing_names+=("go (official tarball)")
+            fi
+        fi
+    fi
+
+    if lang_enabled ruby; then
+        if ! command -v ruby &>/dev/null; then
+            if [ "$PLATFORM" = macos ]; then
+                missing_brew+=(ruby); missing_names+=("ruby")
+            else
+                missing_apt+=(ruby-full); missing_names+=("ruby-full")
+            fi
+        fi
+        if ! command -v bundle &>/dev/null; then
+            need_bundler=true
+            command -v ruby &>/dev/null && missing_names+=("bundler (gem)")
+        fi
+    fi
+
+    if lang_enabled perl; then
+        if [ "$PLATFORM" = macos ]; then
+            command -v perl &>/dev/null  || { missing_brew+=(perl); missing_names+=("perl"); }
+            command -v cpanm &>/dev/null || { missing_brew+=(cpanminus); missing_names+=("cpanminus"); }
+        else
+            command -v perl &>/dev/null  || { missing_apt+=(perl); missing_names+=("perl"); }
+            command -v cpanm &>/dev/null || { missing_apt+=(cpanminus); missing_names+=("cpanminus"); }
+        fi
+    fi
+
+    if lang_enabled java; then
+        local have_java=false
+        if command -v java &>/dev/null; then
+            local jver_raw jver
+            jver_raw=$(java -version 2>&1 | head -1 | grep -o '"[^"]*"' | tr -d '"')
+            jver=$(echo "$jver_raw" | awk -F. '{ if ($1 == 1) print $2; else print $1 }')
+            [ "${jver:-0}" -ge 21 ] && have_java=true
+        fi
+        if [ "$have_java" = false ]; then
+            if [ "$PLATFORM" = macos ]; then
+                missing_brew+=(openjdk@21); missing_names+=("openjdk@21")
+            else
+                missing_apt+=(openjdk-21-jdk); missing_names+=("openjdk-21-jdk")
+            fi
+        fi
+    fi
+
+    if lang_enabled cpp; then
+        if ! command -v cmake &>/dev/null; then
+            if [ "$PLATFORM" = macos ]; then
+                missing_brew+=(cmake); missing_names+=("cmake")
+            else
+                missing_apt+=(cmake); missing_names+=("cmake")
+            fi
+        fi
+        if [ "$PLATFORM" = linux ]; then
+            command -v g++ &>/dev/null                     || { missing_apt+=(g++); missing_names+=("g++"); }
+            dpkg -s libcurl4-openssl-dev &>/dev/null 2>&1  || { missing_apt+=(libcurl4-openssl-dev); missing_names+=("libcurl4-openssl-dev"); }
+            dpkg -s nlohmann-json3-dev &>/dev/null 2>&1    || { missing_apt+=(nlohmann-json3-dev); missing_names+=("nlohmann-json3-dev"); }
+        fi
+    fi
+
+    # ── Nothing missing? ──
+    local total=$(( ${#missing_brew[@]} + ${#missing_apt[@]} ))
+    [ "$need_node" = true ] && total=$((total + 1))
+    [ "$need_go" = true ]   && total=$((total + 1))
+    if [ "$total" -eq 0 ] && [ "$need_bundler" = false ]; then
+        ok "All dependencies already installed"
+        return 0
+    fi
+
+    # ── Show what's missing and ask ──
+    printf "\n${BOLD}Missing Dependencies${RESET}\n"
+    printf "The following will be installed:\n"
+    for name in "${missing_names[@]}"; do
+        printf "  • %s\n" "$name"
+    done
+    echo ""
+
+    if [ "$AUTO_INSTALL" = false ]; then
+        printf "Install missing dependencies? [Y/n] "
+        read -r answer
+        case "$answer" in
+            [nN]*) warn "Skipping dependency install — some languages may fail to set up"; return 0 ;;
+        esac
+    fi
+
+    # ── macOS: brew install ──
+    if [ "$PLATFORM" = macos ]; then
+        if [ ${#missing_brew[@]} -gt 0 ]; then
+            if _has_brew; then
+                info "Running: brew install ${missing_brew[*]}"
+                brew install "${missing_brew[@]}"
+            else
+                err "Homebrew not found. Install it first: https://brew.sh/"
+                return 1
+            fi
+        fi
+    fi
+
+    # ── Linux: apt + special cases ──
+    if [ "$PLATFORM" = linux ]; then
+        if [ ${#missing_apt[@]} -gt 0 ]; then
+            if _has_apt; then
+                info "Running: sudo apt install -y ${missing_apt[*]}"
+                sudo apt-get update -qq
+                sudo apt-get install -y "${missing_apt[@]}"
+            else
+                err "apt-get not found. Install packages manually: ${missing_apt[*]}"
+                return 1
+            fi
+        fi
+
+        # Node.js via NodeSource
+        if [ "$need_node" = true ]; then
+            info "Installing Node.js 20 via NodeSource..."
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+            sudo apt-get install -y nodejs
+        fi
+
+        # Go via official tarball
+        if [ "$need_go" = true ]; then
+            local go_version="1.26.1"
+            local go_arch
+            go_arch=$(dpkg --print-architecture 2>/dev/null || echo "amd64")
+            info "Installing Go ${go_version} (${go_arch})..."
+            wget -q "https://go.dev/dl/go${go_version}.linux-${go_arch}.tar.gz" -O /tmp/go.tar.gz
+            sudo rm -rf /usr/local/go
+            sudo tar -C /usr/local -xzf /tmp/go.tar.gz
+            rm -f /tmp/go.tar.gz
+            export PATH="/usr/local/go/bin:$PATH"
+            ok "Go installed to /usr/local/go"
+            if ! grep -q '/usr/local/go/bin' ~/.bashrc 2>/dev/null; then
+                echo 'export PATH="/usr/local/go/bin:$PATH"' >> ~/.bashrc
+                info "Added Go to ~/.bashrc — run 'source ~/.bashrc' in new shells"
+            fi
+        fi
+    fi
+
+    # Ruby bundler (both platforms)
+    if [ "$need_bundler" = true ] && command -v ruby &>/dev/null; then
+        if ! command -v bundle &>/dev/null; then
+            info "Installing bundler..."
+            gem install bundler 2>/dev/null || sudo gem install bundler
+        fi
+    fi
+
+    ok "Dependencies installed"
+    echo ""
 }
 
 NCPU="$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)"
@@ -210,6 +471,7 @@ printf "════════════════════════
 printf "Languages: %s\n" "${LANGS[*]}"
 printf "════════════════════════════════════════\n\n"
 
+install_deps
 check_ngrok
 setup_env_file
 echo ""

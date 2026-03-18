@@ -29,7 +29,7 @@ And you'll learn three different ways to give your agent capabilities:
 Before we start, make sure you have:
 
 - [ ] **git** installed
-- [ ] Your **language runtime** installed (see the [Platform Setup Guide](#platform-setup-guide) below for exact versions and install commands)
+- [ ] Your **language runtime** installed, or let `setup.sh` install it (see the [Platform Setup Guide](#platform-setup-guide))
 - [ ] A **terminal** -- Terminal/iTerm2 on macOS, any terminal on Linux, or **Windows Terminal + WSL2** on Windows
 - [ ] A **text editor** or IDE you're comfortable with
 - [ ] A **web browser** for signing up for services
@@ -52,7 +52,7 @@ Let's get started.
 
 ## Platform Setup Guide
 
-This section walks you through setting up your development environment on **macOS**, **Linux (Ubuntu/Debian)**, or **Windows via WSL2**. You only need to follow the subsection for your platform. Once your environment is ready, the `setup.sh` script handles cloning SDKs, installing dependencies, and wiring everything together.
+Pick your platform below, then run `setup.sh` -- it detects what's missing and offers to install everything for you. You only need to follow the subsection for your platform.
 
 ### Supported Language Versions
 
@@ -72,15 +72,13 @@ You only need the runtime(s) for the language(s) you plan to use. Most people pi
 
 ### macOS
 
-macOS is the most straightforward platform. All tools are available through [Homebrew](https://brew.sh/).
-
 #### 1. Install Xcode Command Line Tools
 
 ```bash
 xcode-select --install
 ```
 
-If you already have them, this will say so. These provide `git`, `make`, `clang`, and other essentials.
+These provide `git`, `make`, `clang`, and other essentials.
 
 #### 2. Install Homebrew (if not already installed)
 
@@ -90,51 +88,7 @@ If you already have them, this will say so. These provide `git`, `make`, `clang`
 
 After installing, follow the instructions it prints to add Homebrew to your PATH.
 
-#### 3. Install Language Runtimes
-
-Install only the languages you plan to use:
-
-```bash
-# Python
-brew install python@3.12
-
-# Node.js (for TypeScript)
-brew install node@20
-
-# Go
-brew install go
-
-# Ruby
-brew install ruby
-
-# Perl (ships with macOS, but brew gives you a newer version + cpanm)
-brew install perl
-brew install cpanminus
-
-# Java 21
-brew install openjdk@21
-
-# C++ (clang ships with Xcode CLT; cmake is needed for the build)
-brew install cmake
-```
-
-#### 4. Java PATH Setup (if using Java)
-
-Homebrew's OpenJDK isn't on the system PATH by default. The `setup.sh` and `test.sh` scripts auto-detect it, but if you want it available everywhere:
-
-```bash
-# Add to your ~/.zshrc or ~/.bash_profile:
-export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
-export PATH="$JAVA_HOME/bin:$PATH"
-```
-
-#### 5. Install jq (required for test.sh)
-
-```bash
-brew install jq
-```
-
-#### 6. Clone and Run Setup
+#### 3. Clone and Run Setup
 
 ```bash
 git clone https://github.com/signalwire-demos/workshop.git workshop
@@ -142,151 +96,32 @@ cd workshop
 ./setup.sh              # all languages
 ./setup.sh python go    # or pick specific ones
 ```
+
+`setup.sh` detects missing dependencies and offers to `brew install` them for you.
+
+> **Java PATH note:** If using Java, Homebrew's OpenJDK isn't on the system PATH by default. The `setup.sh` and `test.sh` scripts auto-detect it, but if you want it available everywhere, add to `~/.zshrc`:
+> ```bash
+> export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
+> export PATH="$JAVA_HOME/bin:$PATH"
+> ```
 
 ---
 
 ### Linux (Ubuntu / Debian)
 
-These instructions target Ubuntu 22.04+ and Debian 12+, which are also the most common WSL distributions. Other distributions will need equivalent packages from their package managers.
-
-#### 1. Install Base Dependencies
+These instructions target Ubuntu 22.04+ and Debian 12+, which are also the most common WSL distributions.
 
 ```bash
 sudo apt update
-sudo apt install -y git curl wget jq build-essential
-```
-
-This gives you `git`, `curl`, `jq`, `make`, `gcc`, `g++`, and standard build tools.
-
-#### 2. Install Language Runtimes
-
-Install only the languages you plan to use:
-
-**Python:**
-
-```bash
-sudo apt install -y python3 python3-venv python3-pip
-```
-
-On Ubuntu 22.04 this gives Python 3.10; on Ubuntu 24.04 it gives 3.12. Both work.
-
-> **If `python3 -m venv` fails** with `ensurepip is not available`, install the version-specific venv package:
-> ```bash
-> # Check your Python version, then install the matching venv package:
-> python3 --version                          # e.g. Python 3.12.x
-> sudo apt install -y python3.12-venv        # match the major.minor
-> ```
-
-**Node.js (for TypeScript):**
-
-The default `apt` Node.js package is often too old. Use NodeSource:
-
-```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-```
-
-Or use [nvm](https://github.com/nvm-sh/nvm) if you prefer to manage Node versions:
-
-```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-source ~/.bashrc
-nvm install 20
-```
-
-**Go:**
-
-The `apt` version of Go is usually too old. Install from the official tarball:
-
-```bash
-GO_VERSION=1.26.1
-# Detect architecture (amd64 or arm64)
-GO_ARCH=$(dpkg --print-architecture 2>/dev/null || echo "amd64")
-wget "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
-sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
-rm "go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
-
-# Add to ~/.bashrc or ~/.zshrc:
-export PATH="/usr/local/go/bin:$PATH"
-```
-
-> **ARM64 users (Apple Silicon via WSL, Ampere VMs, etc.):** The commands above auto-detect your architecture. If you previously installed the wrong (amd64) binary and get `cannot execute binary file: Exec format error`, re-run the commands above — they'll replace it with the correct one.
-
-Reload your shell (`source ~/.bashrc`) and verify: `go version`
-
-**Ruby:**
-
-```bash
-sudo apt install -y ruby-full
-sudo gem install bundler
-```
-
-**Perl:**
-
-```bash
-sudo apt install -y perl cpanminus
-```
-
-Perl ships with Ubuntu, but `cpanminus` makes dependency installation painless.
-
-**Java 21:**
-
-```bash
-sudo apt install -y openjdk-21-jdk
-```
-
-If your Ubuntu version doesn't have `openjdk-21-jdk`, add the Adoptium repository:
-
-```bash
-sudo apt install -y wget apt-transport-https
-wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | sudo tee /etc/apt/keyrings/adoptium.asc
-echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(. /etc/os-release && echo "$VERSION_CODENAME") main" \
-  | sudo tee /etc/apt/sources.list.d/adoptium.list
-sudo apt update
-sudo apt install -y temurin-21-jdk
-```
-
-You also need Gradle. The easiest way is [SDKMAN](https://sdkman.io/):
-
-```bash
-curl -s "https://get.sdkman.io" | bash
-source "$HOME/.sdkman/bin/sdkman-init.sh"
-sdk install gradle
-```
-
-Or use the `gradlew` wrapper included in the Java SDK (the setup script handles this automatically).
-
-**C++:**
-
-```bash
-sudo apt install -y cmake g++ libcurl4-openssl-dev nlohmann-json3-dev
-```
-
-The C++ SDK uses CMake and depends on libcurl and nlohmann-json.
-
-#### 3. Verify Installations
-
-```bash
-python3 --version    # 3.10+
-node --version       # 18+
-go version           # 1.22+
-ruby --version       # 3.0+
-perl --version       # 5.20+
-java --version       # 21+
-cmake --version      # 3.16+
-```
-
-#### 4. Clone and Run Setup
-
-```bash
 git clone https://github.com/signalwire-demos/workshop.git workshop
 cd workshop
 ./setup.sh              # all languages
 ./setup.sh python go    # or pick specific ones
 ```
 
-> **Note on port utilities:** Some minimal Linux installs don't include `lsof`. The workshop scripts automatically fall back to `ss` (included in all modern Linux distributions) for port detection, so this is handled for you. No extra packages needed.
+`setup.sh` detects missing dependencies and offers to `apt install` them for you. For Go and Node.js, it installs from official sources (Go tarball, NodeSource PPA) since the default apt versions are often too old.
+
+> **Note on port utilities:** Some minimal Linux installs don't include `lsof`. The workshop scripts automatically fall back to `ss` (included in all modern Linux distributions) for port detection, so this is handled for you.
 
 ---
 
@@ -296,100 +131,94 @@ Windows users must use **Windows Subsystem for Linux (WSL2)** -- the workshop sc
 
 #### 1. Install WSL2
 
-Open **PowerShell as Administrator**. First, see what distros are available:
-
-```powershell
-wsl -l --online
-```
-
-Pick one (Ubuntu-24.04 is recommended) and install it:
+Open **PowerShell as Administrator**:
 
 ```powershell
 wsl --install Ubuntu-24.04
 ```
 
-Restart your computer when prompted. After restarting, the Ubuntu terminal will open and ask you to create a username and password. Do so -- this is your Linux user account.
+Restart your computer when prompted. After restarting, create a username and password when the Ubuntu terminal opens.
 
-> **Already have WSL with an older distro?** Check what's installed and which WSL version it's using:
-> ```powershell
-> wsl -l -v
-> ```
-> If the VERSION column shows `1`, upgrade it to WSL2. Use the exact name from the NAME column:
-> ```powershell
-> wsl --set-version Ubuntu-24.04 2
-> ```
+> **Already have WSL?** Check with `wsl -l -v`. If VERSION shows `1`, upgrade: `wsl --set-version Ubuntu-24.04 2`
 
-#### 2. Open Your WSL Terminal
+#### 2. Clone and Run Setup (inside WSL)
 
-You can use any of these:
-- **Windows Terminal** (recommended) -- open it and select the Ubuntu tab
-- **Ubuntu** app from the Start menu
-- VS Code's integrated terminal with the [WSL extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl)
-
-Everything from this point forward happens inside the WSL terminal, not PowerShell.
-
-#### 3. Install Dependencies
-
-Follow the **Linux (Ubuntu / Debian)** instructions above in their entirety. WSL2 Ubuntu is a full Ubuntu distribution -- every command works identically.
-
-```bash
-# Start with base dependencies
-sudo apt update
-sudo apt install -y git curl wget jq build-essential
-
-# Then install your chosen language runtimes (see Linux section above)
-```
-
-#### 4. Clone the Repository -- MUST Be Inside WSL's Filesystem
-
-> **STOP -- read this before you clone.** Do NOT clone into `/mnt/c/...` (your Windows drives). It will fail with permission errors like `chmod on .git/config.lock failed: Operation not permitted`, and even if you work around that, I/O will be 5-10x slower. Always clone into your WSL home directory (`~`).
+> **Important:** Always clone into your WSL home directory (`~`), NOT `/mnt/c/...`. The Windows filesystem causes permission errors and is 5-10x slower.
 
 ```bash
 cd ~
+sudo apt update
 git clone https://github.com/signalwire-demos/workshop.git workshop
 cd workshop
-```
-
-If you're currently in a `/mnt/c/` path, just `cd ~` first. Your WSL home directory lives on the Linux filesystem where everything works normally.
-
-> **If you already cloned onto `/mnt/c/`**, delete that copy and re-clone into `~`:
-> ```bash
-> rm -rf /mnt/c/Users/yourname/Desktop/workshop   # delete the broken clone
-> cd ~
-> git clone https://github.com/signalwire-demos/workshop.git workshop
-> ```
-
-> **If you cloned with Windows Git** (outside WSL) and see `/bin/bash^M: bad interpreter` errors, that's CRLF line endings. Fix it from inside WSL:
-> ```bash
-> sudo apt install -y dos2unix
-> dos2unix setup.sh test.sh
-> ```
-
-#### 5. Run Setup
-
-```bash
 ./setup.sh              # all languages
 ./setup.sh python go    # or pick specific ones
 ```
 
-#### 6. WSL Networking
+`setup.sh` detects missing dependencies (including base tools like `git`, `curl`, `jq`, `build-essential`) and offers to install them. It also checks for CRLF line endings and `/mnt/c/` paths automatically.
 
-WSL2 shares your Windows machine's network. Ports opened in WSL are accessible from Windows and vice versa:
+#### WSL Tips
 
-- Your agent running on port 3000 in WSL is accessible at `http://localhost:3000` from a Windows browser
-- ngrok running inside WSL can tunnel `localhost:3000` normally
-- If localhost doesn't work (rare, some older WSL2 builds), try the WSL IP: `ip addr show eth0 | grep inet`
+- **Networking:** Ports in WSL are accessible from Windows -- `localhost:3000` works in your browser
+- **Editing:** Run `code .` from the workshop directory to open VS Code with the WSL extension. Don't use Windows Notepad or other editors that save with CRLF.
+- **ngrok:** Install ngrok inside WSL (not on Windows) -- see Section 4
+- **File access:** If localhost doesn't work (rare, some older WSL2 builds), try the WSL IP: `ip addr show eth0 | grep inet`
 
-#### 7. File Editing
+---
 
-You can edit WSL files from Windows using VS Code:
+<details>
+<summary><strong>Manual dependency install commands</strong> (if you prefer not to use the automated installer)</summary>
+
+#### macOS (Homebrew)
 
 ```bash
-# From inside your WSL workshop directory:
-code .
+# Base
+brew install jq
+
+# Pick your language(s):
+brew install python@3.12         # Python
+brew install node@20             # TypeScript
+brew install go                  # Go
+brew install ruby                # Ruby
+brew install perl cpanminus      # Perl
+brew install openjdk@21          # Java
+brew install cmake               # C++
 ```
 
-This opens VS Code with the WSL extension, editing files directly on the Linux filesystem. Don't use Windows Notepad or other editors that save with CRLF.
+#### Linux / WSL (apt)
+
+```bash
+# Base
+sudo apt install -y git curl wget jq build-essential
+
+# Pick your language(s):
+sudo apt install -y python3 python3-venv python3-pip             # Python
+sudo apt install -y ruby-full && sudo gem install bundler        # Ruby
+sudo apt install -y perl cpanminus                               # Perl
+sudo apt install -y openjdk-21-jdk                               # Java
+sudo apt install -y cmake g++ libcurl4-openssl-dev nlohmann-json3-dev  # C++
+```
+
+**Node.js (Linux):** The default apt package is often too old. Use NodeSource:
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+**Go (Linux):** The apt version is usually too old. Install from the official tarball:
+
+```bash
+GO_VERSION=1.26.1
+GO_ARCH=$(dpkg --print-architecture 2>/dev/null || echo "amd64")
+wget "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+sudo rm -rf /usr/local/go
+sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+rm "go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+echo 'export PATH="/usr/local/go/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+</details>
 
 ---
 
@@ -399,6 +228,7 @@ The `setup.sh` script automates the entire SDK setup process. Here's what it doe
 
 | Step | What Happens |
 |------|-------------|
+| **Dependencies** | Detects platform (macOS/Linux), checks for missing tools and runtimes, offers to install them |
 | **Environment** | Creates `.env` from your inputs (API keys, credentials) and symlinks it into each language directory |
 | **Clone SDKs** | Shallow-clones each SDK repo into `sdks/` |
 | **Python** | Creates a venv, installs the SDK in editable mode |
