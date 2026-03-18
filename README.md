@@ -215,7 +215,7 @@ You've completed the shared setup. Now pick your language and follow the languag
 | **TypeScript** | [typescript/README.md](typescript/README.md) | `signalwire-agents` (npm) |
 | **Ruby** | [ruby/README.md](ruby/README.md) | `signalwire-agents` (RubyGems) |
 | **Go** | [go/README.md](go/README.md) | `github.com/signalwire/signalwire-agents-go` |
-| **Perl** | [perl/README.md](perl/README.md) | `SignalWire::ML` (CPAN) |
+| **Perl** | [perl/README.md](perl/README.md) | `SignalWire::Agents` (CPAN) |
 | **Java** | [java/README.md](java/README.md) | `com.signalwire:signalwire-agents` (Maven) |
 | **C++** | [cpp/README.md](cpp/README.md) | `signalwire-agents-cpp` |
 
