@@ -282,7 +282,7 @@ fi
 if lang_enabled ruby; then
     info "Setting up Ruby..."
     if check_tool ruby Ruby && check_tool bundle Ruby; then
-        (cd "$SCRIPT_DIR/ruby" && bundle install --quiet)
+        (cd "$SCRIPT_DIR/ruby" && bundle config set --local path vendor/bundle 2>/dev/null && bundle install --quiet)
         ok "Ruby SDK installed via Gemfile path directive"
     fi
     echo ""
