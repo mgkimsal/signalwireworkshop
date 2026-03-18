@@ -67,7 +67,8 @@ clone_sdk() {
     local lang="$1"
     local target="$SDK_DIR/signalwire-agents-${lang}"
     if [ -d "$target" ]; then
-        info "Already cloned: signalwire-agents-${lang}"
+        info "Updating signalwire-agents-${lang}..."
+        (cd "$target" && git pull --ff-only -q 2>/dev/null) || warn "Could not update signalwire-agents-${lang} (offline?)"
     else
         info "Cloning signalwire-agents-${lang}..."
         git clone --depth 1 "${REPO_BASE}/signalwire-agents-${lang}.git" "$target"
