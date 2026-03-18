@@ -743,7 +743,7 @@ for lang in "${LANGS[@]}"; do
         go)         echo "  Go:         cd go && go run ./steps/step04_hello_agent" ;;
         ruby)       echo "  Ruby:       cd ruby && bundle exec ruby steps/step04_hello_agent.rb" ;;
         perl)       echo "  Perl:       cd perl && PERL5LIB=../sdks/signalwire-agents-perl/local/lib/perl5 perl steps/step04_hello_agent.pl" ;;
-        java)       echo "  Java:       cd java && source env.sh && ./gradlew run --console=plain" ;;
+        java)       echo "  Java:       cd java && source env.sh && cp steps/Step04HelloAgent.java src/main/java/HelloAgent.java && ./gradlew run -PmainClass=HelloAgent --console=plain" ;;
         cpp)        echo "  C++:        cd cpp && cp steps/step04_hello_agent.cpp agent.cpp && cd build && cmake .. && make && ./agent" ;;
     esac
 done
