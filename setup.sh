@@ -677,6 +677,13 @@ if lang_enabled java; then
             mkdir -p "$SCRIPT_DIR/java/libs"
             cp "$SDK_DIR/signalwire-agents-java/build/libs/signalwire-agents-"*.jar \
                "$SCRIPT_DIR/java/libs/" 2>/dev/null || warn "Could not copy SDK jar"
+            # Copy gradlew wrapper into java/ so users don't need system gradle
+            if [ ! -f "$SCRIPT_DIR/java/gradlew" ]; then
+                cp "$SDK_DIR/signalwire-agents-java/gradlew" "$SCRIPT_DIR/java/gradlew"
+                chmod +x "$SCRIPT_DIR/java/gradlew"
+                mkdir -p "$SCRIPT_DIR/java/gradle/wrapper"
+                cp "$SDK_DIR/signalwire-agents-java/gradle/wrapper/"* "$SCRIPT_DIR/java/gradle/wrapper/"
+            fi
             ok "Java SDK jar built and copied to java/libs/"
         fi
     else
@@ -730,7 +737,7 @@ for lang in "${LANGS[@]}"; do
         go)         echo "  Go:         cd go && go run ./steps/step04_hello_agent" ;;
         ruby)       echo "  Ruby:       cd ruby && bundle exec ruby steps/step04_hello_agent.rb" ;;
         perl)       echo "  Perl:       cd perl && PERL5LIB=../sdks/signalwire-agents-perl/local/lib/perl5 perl steps/step04_hello_agent.pl" ;;
-        java)       echo "  Java:       cd java && source env.sh && gradle run --console=plain" ;;
+        java)       echo "  Java:       cd java && source env.sh && ./gradlew run --console=plain" ;;
         cpp)        echo "  C++:        cd cpp && cp steps/step04_hello_agent.cpp agent.cpp && cd build && cmake .. && make && ./agent" ;;
     esac
 done
