@@ -68,15 +68,45 @@ skip()  { printf "${YELLOW}[SKIP]${RESET}  %s\n" "$*"; ((SKIP++)); }
 
 # Portable "find PIDs on a TCP port" — works on macOS + Linux + WSL
 _pids_on_port() {
-    local port="$1"
-    if command -v lsof &>/dev/null; then
-        lsof -ti :"$port" 2>/dev/null || true
-    elif command -v ss &>/dev/null; then
-        ss -tlnp "sport = :$port" 2>/dev/null \
-            | grep -o 'pid=[0-9]*' | cut -d= -f2 || true
-    elif command -v fuser &>/dev/null; then
-        fuser "$port/tcp" 2>/dev/null | tr -s ' ' '\n' | grep -o '[0-9]*' || true
+    local port="$1" pids=""
+
+    # Method 1: lsof (macOS, some Linux)
+    if [ -z "$pids" ] && command -v lsof &>/dev/null; then
+        pids=$(lsof -ti :"$port" 2>/dev/null || true)
     fi
+
+    # Method 2: ss (most Linux — but unreliable on WSL)
+    if [ -z "$pids" ] && command -v ss &>/dev/null; then
+        pids=$(ss -tlnp "sport = :$port" 2>/dev/null \
+            | grep -o 'pid=[0-9]*' | cut -d= -f2 || true)
+    fi
+
+    # Method 3: fuser
+    if [ -z "$pids" ] && command -v fuser &>/dev/null; then
+        pids=$(fuser "$port/tcp" 2>/dev/null | tr -s ' ' '\n' | grep -o '[0-9]*' || true)
+    fi
+
+    # Method 4: /proc/net/tcp (reliable fallback for WSL where ss/lsof miss processes)
+    if [ -z "$pids" ] && [ -f /proc/net/tcp ]; then
+        local hex_port
+        hex_port=$(printf '%04X' "$port")
+        # Find inodes of LISTEN (0A) sockets on this port
+        local inodes
+        inodes=$(awk -v hp="$hex_port" '$2 ~ ":"hp"$" && $4 == "0A" {print $10}' /proc/net/tcp 2>/dev/null)
+        for inode in $inodes; do
+            [ "$inode" = "0" ] && continue
+            # Walk /proc/*/fd to find which PID owns this socket inode
+            local pid_dir
+            for pid_dir in /proc/[0-9]*; do
+                local p="${pid_dir##*/}"
+                if ls -l "$pid_dir/fd" 2>/dev/null | grep -q "socket:\[$inode\]"; then
+                    pids="${pids:+$pids }$p"
+                fi
+            done
+        done
+    fi
+
+    echo "$pids"
 }
 
 wait_for_port() {
@@ -94,12 +124,25 @@ wait_for_port() {
     return 1
 }
 
+_kill_tree() {
+    # Recursively kill a process and all its descendants (depth-first).
+    local pid="$1" sig="${2:-TERM}"
+    local children
+    children=$(pgrep -P "$pid" 2>/dev/null || true)
+    for child in $children; do
+        _kill_tree "$child" "$sig"
+    done
+    kill -"$sig" "$pid" 2>/dev/null || true
+}
+
 kill_agent() {
     local pid="$1"
     if kill -0 "$pid" 2>/dev/null; then
-        # Kill the entire process group — the agent runs in a subshell,
-        # so killing just the subshell PID leaves the actual process orphaned.
-        kill -- -"$pid" 2>/dev/null || kill "$pid" 2>/dev/null
+        # Kill the entire process tree — go run / gradle / bundle exec spawn
+        # child processes that escape simple process-group kills on WSL.
+        _kill_tree "$pid"
+        # Also try process group kill for good measure
+        kill -- -"$pid" 2>/dev/null || true
         wait "$pid" 2>/dev/null || true
     fi
     # Belt-and-suspenders: kill anything still on our port
@@ -269,9 +312,13 @@ start_agent() {
     # pid=$(start_agent ...) doesn't hang waiting for the subshell to close its fds
     case "$lang" in
         go)
-            local stepdir
+            local stepdir binfile
             stepdir="$(dirname "$file")"
-            (cd "$SCRIPT_DIR/go" && exec go run "$stepdir") >>"$logfile" 2>&1 &
+            binfile="$LOGDIR/go_agent_bin"
+            # Build first, then exec the binary directly — go run spawns a
+            # grandchild process that escapes process-group kills on WSL.
+            (cd "$SCRIPT_DIR/go" && go build -o "$binfile" "$stepdir") 2>>"$logfile"
+            (cd "$SCRIPT_DIR/go" && exec "$binfile") >>"$logfile" 2>&1 &
             ;;
         ruby)
             (cd "$SCRIPT_DIR/ruby" && exec bundle exec ruby "$file") >>"$logfile" 2>&1 &
