@@ -107,8 +107,18 @@ kill_agent() {
     leftover=$(_pids_on_port "$PORT")
     if [ -n "$leftover" ]; then
         kill $leftover 2>/dev/null || true
-        sleep 1
     fi
+    # Wait until the port is actually free (up to 5s)
+    local i
+    for ((i=0; i<50; i++)); do
+        leftover=$(_pids_on_port "$PORT")
+        [ -z "$leftover" ] && return 0
+        if [ "$i" -eq 10 ]; then
+            # Escalate to SIGKILL after 1s
+            kill -9 $leftover 2>/dev/null || true
+        fi
+        sleep 0.1
+    done
 }
 
 ensure_port_free() {
@@ -483,7 +493,6 @@ test_url_based() {
     if ! wait_for_port "$PORT" "$timeout" "$pid"; then
         fail "$label: agent did not start within ${TIMEOUT}s (see $logfile)"
         kill_agent "$pid"
-        sleep 1
         return
     fi
 
@@ -493,7 +502,6 @@ test_url_based() {
     if [ -z "$swml" ]; then
         fail "$label: swaig-test --dump-swml returned empty output"
         kill_agent "$pid"
-        sleep 1
         return
     fi
 
@@ -508,7 +516,6 @@ test_url_based() {
 
     # Cleanup
     kill_agent "$pid"
-    sleep 1
 }
 
 # ── Main ─────────────────────────────────────────────────────────────────────
