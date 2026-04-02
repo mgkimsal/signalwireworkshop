@@ -3,3 +3,27 @@ perl/lib
 python/venv/
 .test-logs/
 INSTRUCTOR_GUIDE.md
+
+# Environment / credentials
+.env
+*/.env
+
+# Build artifacts
+cpp/build/
+cpp/agent.cpp
+java/.gradle/
+java/build/
+java/libs/
+java/env.sh
+java/src/main/
+go/step*_*
+
+# Language package caches
+typescript/node_modules/
+typescript/package-lock.json
+ruby/.bundle/
+ruby/vendor/
+ruby/Gemfile.lock
+python/steps/__pycache__/
+__pycache__/
+calls/
