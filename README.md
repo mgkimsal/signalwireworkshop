@@ -74,7 +74,7 @@ You only need the runtime(s) for the language(s) you plan to use. Most people pi
 
 ### Docker Desktop (Recommended)
 
-Docker is the fastest way to get started. The pre-built workshop image includes **all 9 language runtimes, all 9 SDKs pre-compiled, ngrok, and development tools**. No installing compilers, no version conflicts, no platform headaches. Pull the image and go.
+The workshop image has **everything pre-built inside** -- all 9 language runtimes, all 9 SDKs compiled, venvs ready, ngrok installed. No cloning repos, no installing compilers. One command and you're in.
 
 ---
 
@@ -83,45 +83,35 @@ Docker is the fastest way to get started. The pre-built workshop image includes 
 <details>
 <summary><strong>macOS</strong></summary>
 
-Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) or install with Homebrew:
+Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) or:
 
 ```bash
 brew install --cask docker
 ```
 
-Launch **Docker Desktop** from Applications. Wait for the whale icon in your menu bar to stop animating -- that means the engine is ready.
+Launch **Docker Desktop** from Applications. Wait for the whale icon in your menu bar to stop animating.
 
 </details>
 
 <details>
 <summary><strong>Windows</strong></summary>
 
-**1. Install WSL2** (if you don't have it already):
-
-Open **PowerShell as Administrator** and run:
+**1. Install WSL2** -- open **PowerShell as Administrator**:
 
 ```powershell
 wsl --install
 ```
 
-Restart your computer when prompted. After reboot, a terminal opens to create your Ubuntu username and password.
+Restart when prompted. After reboot, create your Ubuntu username and password.
 
-**2. Install Docker Desktop:**
+**2. Install Docker Desktop** -- download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/). Ensure **"Use WSL 2 instead of Hyper-V"** is checked. Launch it after installing.
 
-Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/).
-
-During installation, ensure **"Use WSL 2 instead of Hyper-V"** is checked. After installing, launch Docker Desktop -- it integrates with WSL2 automatically.
-
-**3. Open a terminal:**
-
-Open **Windows Terminal** or **PowerShell** and run `wsl` to enter your Linux environment. All workshop commands run inside WSL.
+**3. Open a terminal** -- open **Windows Terminal** or **PowerShell** and type `wsl` to enter Linux. All workshop commands run inside WSL.
 
 </details>
 
 <details>
 <summary><strong>Linux (Ubuntu / Debian)</strong></summary>
-
-Install Docker Engine:
 
 ```bash
 # Add Docker's official repository
@@ -138,13 +128,11 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
-# Allow your user to run Docker without sudo
+# Allow your user to run Docker without sudo (log out and back in after)
 sudo usermod -aG docker $USER
 ```
 
-**Log out and back in** for the group change to take effect.
-
-Or install [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux-install/) if you prefer the GUI.
+Or install [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux-install/).
 
 </details>
 
@@ -152,69 +140,39 @@ Or install [Docker Desktop for Linux](https://docs.docker.com/desktop/install/li
 
 ```bash
 docker --version
-docker compose version
 ```
-
-You should see version numbers for both. If not, make sure Docker Desktop is running (or the Docker daemon on Linux).
 
 ---
 
-#### Step 2: Clone the Workshop and Pull the Image
+#### Step 2: Start the Workshop
 
 ```bash
-git clone https://github.com/signalwire-demos/workshop.git workshop
-cd workshop
-docker compose pull
+docker run -it -p 3000:3000 -p 4040:4040 briankwest/workshop
 ```
 
-This pulls the pre-built `briankwest/workshop` image with everything inside. Takes under a minute.
+That's it. You're inside the workshop with everything ready. Type `help` to see what's available.
+
+> **What's inside:** Python 3.12, Node.js 20, Go 1.23, Ruby 3.2, Perl 5.38, Java 21, C++ (g++ 13), .NET 8.0, PHP 8.3, ngrok, nano, vim -- plus all 9 SignalWire SDKs pre-compiled and wired up.
 
 ---
 
-#### Step 3: Start the Container
-
-```bash
-docker compose run --rm --service-ports workshop bash
-```
-
-You're now inside the container as `devuser`. The workshop directory is mounted at `/workshop` -- files you edit in your IDE on the host appear instantly inside the container, and vice versa.
-
-What's inside:
-
-| Runtime | Version |
-|---------|---------|
-| Python | 3.12 |
-| Node.js | 20 LTS |
-| Go | 1.23 |
-| Ruby | 3.2 |
-| Perl | 5.38 |
-| Java | 21 |
-| C++ (g++) | 13 |
-| .NET | 8.0 |
-| PHP | 8.3 |
-| ngrok | latest |
-
----
-
-#### Step 4: Run Setup
-
-Inside the container:
+#### Step 3: Enter Your Credentials
 
 ```bash
 ./setup.sh python
 ```
 
-Pass whichever language(s) you want. Since the SDKs are pre-built in the image, setup just copies them into your workspace and prompts for your credentials:
+Pick your language(s). Since everything is pre-built, setup only asks for your credentials:
 
 - **SignalWire** -- Project ID, API Token, Space Name
-- **ngrok** -- Auth token and static domain (auto-configures and starts ngrok in the background)
-- **API keys** -- WeatherAPI and API Ninjas (for later steps)
+- **ngrok** -- Auth token and static domain (auto-configures and starts the tunnel)
+- **API keys** -- WeatherAPI and API Ninjas (for weather and joke steps)
 
-When setup finishes, it prints the **SWML URL** you'll paste into the SignalWire dashboard. That's all the setup there is.
+When setup finishes, it prints the **SWML URL** to paste into the SignalWire dashboard.
 
 ---
 
-#### Step 5: Run Your Agent
+#### Step 4: Run Your Agent
 
 ```bash
 cd python
@@ -222,7 +180,7 @@ source venv/bin/activate
 python steps/step04_hello_agent.py
 ```
 
-Your agent is now running on port 3000, ngrok is tunneling it to the internet, and you can call your phone number.
+Your agent is live on port 3000. ngrok is tunneling it to the internet. Call your phone number.
 
 ---
 
@@ -230,13 +188,12 @@ Your agent is now running on port 3000, ngrok is tunneling it to the internet, a
 
 | What | Command |
 |------|---------|
-| Start a shell | `docker compose run --rm --service-ports workshop bash` |
-| Pull latest image | `docker compose pull` |
-| Build locally instead | `docker compose build` |
-| Stop everything | `docker compose down` |
+| Start the workshop | `docker run -it -p 3000:3000 -p 4040:4040 briankwest/workshop` |
+| Show help | `help` |
 | View ngrok tunnel | `screen -r workshop-ngrok` (detach: Ctrl-A D) |
 | Stop ngrok | `screen -S workshop-ngrok -X quit` |
 | ngrok web UI | `http://localhost:4040` in your browser |
+| Edit credentials | `nano .env` |
 
 > **If you're using Docker, skip ahead to [Section 2: SignalWire Account Setup](#section-2-signalwire-account-setup-10-min).** The macOS, Linux, and Windows sections below are only needed for native installation.
 

@@ -5,7 +5,5 @@ services:
     ports:
       - "3000:3000"
       - "4040:4040"
-    volumes:
-      - .:/workshop
     stdin_open: true
     tty: true
