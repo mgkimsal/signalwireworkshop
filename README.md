@@ -130,15 +130,20 @@ docker compose version
 
 You should see version numbers for both. If `docker compose` isn't found, make sure Docker Desktop is running.
 
-#### 2. Clone and Build the Workshop Image
+#### 2. Clone and Get the Workshop Image
 
 ```bash
 git clone https://github.com/signalwire-demos/workshop.git workshop
 cd workshop
+
+# Option A: Pull the pre-built image (fastest — recommended)
+docker compose pull
+
+# Option B: Build locally (if you prefer or need to customize)
 docker compose build
 ```
 
-The first build takes a few minutes -- it downloads Ubuntu 24.04 and installs Python, Node.js, Go, Ruby, Perl, Java 21, C++, .NET 8, PHP, and ngrok. After the first build, starting is instant.
+The pre-built image includes Python, Node.js, Go, Ruby, Perl, Java 21, C++, .NET 8, PHP, and ngrok -- all ready to go. Pulling takes under a minute on a decent connection. Building locally takes a few minutes.
 
 #### 3. Start the Workshop Environment
 
@@ -160,15 +165,11 @@ Pass the languages you want, same as the native setup. Since all runtimes are pr
 
 #### Docker + ngrok
 
-Run ngrok on your **host machine** (not inside the container). The container's port 3000 is mapped to your host's port 3000, so ngrok tunneling to `localhost:3000` reaches your agent inside Docker.
+`setup.sh` starts ngrok automatically inside the container in a background `screen` session. Ports 3000 (agent) and 4040 (ngrok inspection UI) are both mapped to your host, so you can visit `http://localhost:4040` in your browser to see tunnel status.
 
-Since the agent code can't auto-detect ngrok running on the host, add your static domain to `.env`:
+If you provided your ngrok authtoken and static domain during setup, the tunnel is already running. The summary at the end of setup prints the full SWML URL ready to paste into the SignalWire dashboard.
 
-```
-SWML_PROXY_URL_BASE=https://your-domain.ngrok-free.app
-```
-
-The agents read this variable as a fallback when ngrok auto-detection doesn't find a local tunnel.
+> **Manage the tunnel:** `screen -r workshop-ngrok` to view (detach with Ctrl-A D), or `screen -S workshop-ngrok -X quit` to stop it.
 
 #### Quick Reference: Docker Commands
 
@@ -546,13 +547,15 @@ Or download directly from [ngrok.com/download](https://ngrok.com/download).
 
 ### Step 2: Add Your Auth Token
 
+> **If you used `setup.sh`**, it already configured your auth token and started ngrok automatically. You can skip Steps 2 and 3.
+
 ```bash
 ngrok config add-authtoken YOUR_NGROK_AUTHTOKEN
 ```
 
 ### Step 3: Start the Tunnel
 
-In a terminal:
+`setup.sh` starts ngrok automatically in a background `screen` session. If you need to start it manually instead:
 
 ```bash
 ngrok http --url=your-domain.ngrok-free.app 3000
@@ -562,7 +565,7 @@ Replace `your-domain.ngrok-free.app` with the static domain you created in Secti
 
 You should see ngrok's status display showing your tunnel is active, forwarding from your static domain to `localhost:3000`.
 
-> **Leave ngrok running.** You'll need this tunnel active throughout the workshop. Open a new terminal for everything else.
+> **Leave ngrok running.** You'll need this tunnel active throughout the workshop. If setup.sh started it, it's already running in the background — manage it with `screen -r workshop-ngrok`.
 
 ### Step 4: Connect Your Phone Number (After Your Agent Is Running)
 

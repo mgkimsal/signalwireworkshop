@@ -22,7 +22,7 @@ RUN apt-get update \
 # ── Install all language runtimes and tools ─────────────────────────────────
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # Base tools
-    git curl wget jq build-essential lsof \
+    git curl wget jq build-essential lsof screen \
     # Python 3.12
     python3 python3-venv python3-pip \
     # Node.js 20 (from NodeSource)

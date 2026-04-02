@@ -572,6 +572,65 @@ check_ngrok() {
     fi
 }
 
+start_ngrok_background() {
+    # Guard: ngrok must be installed
+    if ! command -v ngrok &>/dev/null; then
+        return 0
+    fi
+
+    # Guard: screen must be installed
+    if ! command -v screen &>/dev/null; then
+        warn "screen not installed — start ngrok manually: ngrok http --url=DOMAIN 3000"
+        return 0
+    fi
+
+    # Guard: need a static domain from .env
+    local domain
+    domain=$(env_val SWML_PROXY_URL_BASE)
+    domain="${domain#https://}"
+    if [ -z "$domain" ]; then
+        return 0
+    fi
+
+    # Guard: ngrok already running?
+    local tunnel_url
+    tunnel_url=$(curl -s --connect-timeout 2 http://127.0.0.1:4040/api/tunnels 2>/dev/null \
+        | grep -o '"public_url":"https://[^"]*"' | head -1 \
+        | sed 's/"public_url":"https:\/\///; s/"//') || true
+    if [ -n "$tunnel_url" ]; then
+        ok "ngrok already running (tunnel: ${tunnel_url})"
+        return 0
+    fi
+
+    # Guard: stale screen session?
+    if screen -ls 2>/dev/null | grep -q "workshop-ngrok"; then
+        warn "screen session 'workshop-ngrok' exists but tunnel not responding"
+        warn "Kill it with: screen -S workshop-ngrok -X quit"
+        return 0
+    fi
+
+    # Launch ngrok in detached screen
+    info "Starting ngrok tunnel in background (screen session: workshop-ngrok)..."
+    screen -dmS workshop-ngrok ngrok http --url="$domain" 3000
+
+    # Poll for tunnel to come up (up to 5 seconds)
+    local attempts=0
+    while [ $attempts -lt 10 ]; do
+        sleep 0.5
+        tunnel_url=$(curl -s --connect-timeout 1 http://127.0.0.1:4040/api/tunnels 2>/dev/null \
+            | grep -o '"public_url":"https://[^"]*"' | head -1 \
+            | sed 's/"public_url":"https:\/\///; s/"//') || true
+        if [ -n "$tunnel_url" ]; then
+            ok "ngrok tunnel active: https://${tunnel_url}"
+            return 0
+        fi
+        attempts=$((attempts + 1))
+    done
+
+    warn "ngrok started but tunnel not yet responding — check: screen -r workshop-ngrok"
+    return 0
+}
+
 # ── Clone SDKs ───────────────────────────────────────────────────────────────
 
 printf "\n${BOLD}SignalWire Workshop Setup${RESET}\n"
@@ -582,6 +641,7 @@ printf "════════════════════════
 install_deps
 check_ngrok
 setup_env_file
+start_ngrok_background
 echo ""
 
 mkdir -p "$SDK_DIR"
@@ -855,17 +915,34 @@ if [ ! -f "$SCRIPT_DIR/.env" ] || grep -q "your-.*-here" "$SCRIPT_DIR/.env" 2>/d
     echo "  $step. Edit .env with your SignalWire credentials and API keys"
     step=$((step + 1))
 fi
-if ! command -v ngrok &>/dev/null; then
-    echo "  $step. Install ngrok: https://ngrok.com/download"
-    step=$((step + 1))
-fi
-# Show ngrok start command with their static domain if configured
-_domain=$(env_val SWML_PROXY_URL_BASE)
-_domain="${_domain#https://}"
-if [ -n "$_domain" ]; then
-    echo "  $step. Start tunnel:  ngrok http --url=${_domain} 3000"
+# Check if ngrok tunnel is live
+_tunnel_domain=$(curl -s --connect-timeout 2 http://127.0.0.1:4040/api/tunnels 2>/dev/null \
+    | grep -o '"public_url":"https://[^"]*"' | head -1 \
+    | sed 's/"public_url":"https:\/\///; s/"//') || true
+
+if [ -n "$_tunnel_domain" ]; then
+    printf "  ${GREEN}✓ ngrok tunnel is running${RESET} (session: workshop-ngrok)\n"
+    _auth_user=$(env_val SWML_BASIC_AUTH_USER)
+    _auth_pass=$(env_val SWML_BASIC_AUTH_PASSWORD)
+    if [ -n "$_auth_user" ] && [ -n "$_auth_pass" ]; then
+        printf "\n${BOLD}  Your SignalWire SWML URL (paste into dashboard):${RESET}\n"
+        echo "  https://${_auth_user}:${_auth_pass}@${_tunnel_domain}/"
+        echo ""
+    fi
+    echo "  View tunnel:   screen -r workshop-ngrok  (detach: Ctrl-A D)"
+    echo "  Stop tunnel:   screen -S workshop-ngrok -X quit"
 else
-    echo "  $step. Start tunnel:  ngrok http 3000"
+    if ! command -v ngrok &>/dev/null; then
+        echo "  $step. Install ngrok: https://ngrok.com/download"
+        step=$((step + 1))
+    fi
+    _domain=$(env_val SWML_PROXY_URL_BASE)
+    _domain="${_domain#https://}"
+    if [ -n "$_domain" ]; then
+        echo "  $step. Start tunnel:  ngrok http --url=${_domain} 3000"
+    else
+        echo "  $step. Start tunnel:  ngrok http 3000"
+    fi
 fi
 echo ""
 printf "${BOLD}Run an agent:${RESET}\n"
