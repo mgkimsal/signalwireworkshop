@@ -2,3 +2,4 @@ sdks/
 perl/lib
 python/venv/
 .test-logs/
+INSTRUCTOR_GUIDE.md

@@ -28,8 +28,8 @@ And you'll learn three different ways to give your agent capabilities:
 
 Before we start, make sure you have:
 
+- [ ] **Docker Desktop** installed ([see setup below](#docker-desktop-recommended)), OR your **language runtime** installed natively
 - [ ] **git** installed
-- [ ] Your **language runtime** installed, or let `setup.sh` install it (see the [Platform Setup Guide](#platform-setup-guide))
 - [ ] A **terminal** -- Terminal/iTerm2 on macOS, any terminal on Linux, or **Windows Terminal + WSL2** on Windows
 - [ ] A **text editor** or IDE you're comfortable with
 - [ ] A **web browser** for signing up for services
@@ -69,6 +69,121 @@ Pick your platform below, then run `setup.sh` -- it detects what's missing and o
 You only need the runtime(s) for the language(s) you plan to use. Most people pick one or two.
 
 ---
+
+### Docker Desktop (Recommended)
+
+Docker is the fastest way to get started -- **every language runtime is pre-installed** and you skip all platform-specific dependency issues. This works identically on macOS, Windows, and Linux.
+
+#### 1. Install Docker Desktop
+
+**macOS:**
+
+Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) or install with Homebrew:
+
+```bash
+brew install --cask docker
+```
+
+Launch **Docker Desktop** from your Applications folder after installing. Wait for the Docker engine to start (the whale icon in your menu bar will stop animating).
+
+**Windows:**
+
+Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/). During installation:
+
+1. Ensure **"Use WSL 2 instead of Hyper-V"** is checked
+2. Complete the installer and restart if prompted
+3. Launch **Docker Desktop** -- it will configure WSL integration automatically
+
+> **Note:** You still need WSL2 installed for Docker Desktop on Windows. If you don't have it, open PowerShell as Administrator and run `wsl --install` first.
+
+**Linux (Ubuntu / Debian):**
+
+```bash
+# Add Docker's official GPG key and repository
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+  https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# Add your user to the docker group (log out and back in after this)
+sudo usermod -aG docker $USER
+```
+
+Or download **Docker Desktop for Linux** from [docs.docker.com/desktop/install/linux](https://docs.docker.com/desktop/install/linux-install/).
+
+**Verify Docker is running:**
+
+```bash
+docker --version
+docker compose version
+```
+
+You should see version numbers for both. If `docker compose` isn't found, make sure Docker Desktop is running.
+
+#### 2. Clone and Build the Workshop Image
+
+```bash
+git clone https://github.com/signalwire-demos/workshop.git workshop
+cd workshop
+docker compose build
+```
+
+The first build takes a few minutes -- it downloads Ubuntu 24.04 and installs Python, Node.js, Go, Ruby, Perl, Java 21, C++, and ngrok. After the first build, starting is instant.
+
+#### 3. Start the Workshop Environment
+
+```bash
+docker compose run --rm --service-ports workshop bash
+```
+
+You're now inside a container with every language runtime ready. The workshop directory is mounted at `/workshop` -- any files you edit on your host (in your IDE) appear inside the container immediately, and vice versa.
+
+#### 4. Run Setup (Inside the Container)
+
+```bash
+./setup.sh python
+```
+
+Pass the languages you want, same as the native setup. Since all runtimes are pre-installed, this only clones the SDKs and builds them -- no dependency prompts.
+
+> **Tip:** Leave this terminal open for running your agent. Open a second terminal on your **host** machine for ngrok (see [Section 4](#section-4-ngrok-setup-and-going-live)).
+
+#### Docker + ngrok
+
+Run ngrok on your **host machine** (not inside the container). The container's port 3000 is mapped to your host's port 3000, so ngrok tunneling to `localhost:3000` reaches your agent inside Docker.
+
+Since the agent code can't auto-detect ngrok running on the host, add your static domain to `.env`:
+
+```
+SWML_PROXY_URL_BASE=https://your-domain.ngrok-free.app
+```
+
+The agents read this variable as a fallback when ngrok auto-detection doesn't find a local tunnel.
+
+#### Quick Reference: Docker Commands
+
+| What | Command |
+|------|---------|
+| Start a shell | `docker compose run --rm --service-ports workshop bash` |
+| Rebuild after Dockerfile changes | `docker compose build` |
+| Stop everything | `docker compose down` |
+| Check running containers | `docker compose ps` |
+
+> **If you're using Docker, skip ahead to [Section 2: SignalWire Account Setup](#section-2-signalwire-account-setup-10-min).** The macOS, Linux, and Windows sections below are only needed for native installation.
+
+---
+
+### Native Installation (Alternative)
+
+If you prefer to install language runtimes directly on your machine instead of using Docker, follow the section for your platform below.
 
 ### macOS
 
@@ -285,6 +400,10 @@ The test script uses `swaig-test` (a CLI tool bundled with each SDK) to validate
 | Slow `npm install` or `go mod tidy` | WSL | Make sure you cloned inside WSL's filesystem (`~/workshop`), not on `/mnt/c/` |
 | `localhost:3000` not reachable from Windows | WSL | Try `curl localhost:3000` from inside WSL first. If that works but the Windows browser can't reach it, check your WSL version (`wsl -l -v` should show VERSION 2) |
 | Permission denied running `setup.sh` | All | `chmod +x setup.sh test.sh` |
+| `docker compose` not found | All | Make sure Docker Desktop is running. On older installs, try `docker-compose` (with hyphen) |
+| `docker compose build` fails | All | Check that Docker Desktop is running (whale icon in menu/system tray). On Linux, verify your user is in the `docker` group |
+| Port 3000 not reachable from host | Docker | Make sure you used `--service-ports` flag: `docker compose run --rm --service-ports workshop bash` |
+| Agent can't detect ngrok in Docker | Docker | Expected -- set `SWML_PROXY_URL_BASE=https://your-domain.ngrok-free.app` in `.env` |
 
 ---
 
@@ -584,6 +703,8 @@ Here's how the workshop files are organized:
 workshop/
 ├── README.md              # This file -- shared setup and concepts
 ├── .env.example           # Environment variable template
+├── Dockerfile             # Docker image with all language runtimes
+├── docker-compose.yml     # One-command container startup
 ├── python/
 │   ├── README.md          # Python-specific guide
 │   └── steps/             # Checkpoint files for each section

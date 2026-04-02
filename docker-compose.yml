@@ -1,0 +1,9 @@
+services:
+  workshop:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/workshop
+    stdin_open: true
+    tty: true
