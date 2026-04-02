@@ -121,8 +121,15 @@ RUN cd sdks/signalwire-cpp && mkdir -p build \
 RUN cd sdks/signalwire-dotnet \
     && dotnet build src/SignalWire/SignalWire.csproj -c Release -p:TargetFrameworks=net8.0 --nologo -v q
 
-# PHP: install dependencies
-RUN cd sdks/signalwire-php && composer install --quiet --no-interaction
+# PHP: install production dependencies only (skip phpunit — saves ~2 GB)
+RUN cd sdks/signalwire-php && composer install --quiet --no-interaction --no-dev
+
+# ── Cleanup: strip caches and unnecessary files ────────────────────────────
+RUN rm -rf sdks/*/.git \
+    && rm -rf $HOME/.npm $HOME/.cache/go-build $HOME/.nuget
+USER root
+RUN rm -rf /var/lib/apt/lists/* /usr/share/doc/* /usr/share/man/*
+USER devuser
 
 # ── Help command + welcome message ──────────────────────────────────────────
 RUN cat >> $HOME/.bashrc << 'BASHRC'
