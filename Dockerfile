@@ -29,8 +29,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nodejs \
     # Ruby + Bundler
     ruby-full \
-    # Perl + CPAN
-    perl cpanminus libssl-dev \
+    # Perl + CPAN + SSL modules (pre-built to avoid compile issues)
+    perl cpanminus libssl-dev libnet-ssleay-perl libio-socket-ssl-perl \
     # Java 21
     openjdk-21-jdk-headless \
     # C++ toolchain
@@ -53,8 +53,16 @@ RUN GO_ARCH=$(dpkg --print-architecture) \
     && tar -C /usr/local -xzf "go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" \
     && rm "go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
 
+# ── Non-root user ───────────────────────────────────────────────────────────
+ARG UID=1000
+ARG GID=1000
+RUN groupadd -g ${GID} devuser 2>/dev/null || true \
+    && useradd -m -u ${UID} -g ${GID} -s /bin/bash devuser 2>/dev/null \
+    || useradd -m -s /bin/bash devuser
+
 WORKDIR /workshop
 
 EXPOSE 3000
 
+USER devuser
 CMD ["bash"]
