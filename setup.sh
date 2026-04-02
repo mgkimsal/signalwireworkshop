@@ -87,12 +87,19 @@ lang_enabled() {
     return 1
 }
 
+PREBUILT_SDK_DIR="/opt/sdks"
+
 clone_sdk() {
     local lang="$1"
     local target="$SDK_DIR/signalwire-${lang}"
+    local prebuilt="$PREBUILT_SDK_DIR/signalwire-${lang}"
+
     if [ -d "$target" ]; then
-        info "Updating signalwire-${lang}..."
-        (cd "$target" && git pull --ff-only -q 2>/dev/null) || warn "Could not update signalwire-${lang} (offline?)"
+        info "SDK signalwire-${lang} already present"
+    elif [ -d "$prebuilt" ]; then
+        # Docker image has pre-built SDKs — copy into workspace
+        cp -a "$prebuilt" "$target"
+        ok "Copied pre-built signalwire-${lang}"
     else
         info "Cloning signalwire-${lang}..."
         git clone --depth 1 "${REPO_BASE}/signalwire-${lang}.git" "$target"
