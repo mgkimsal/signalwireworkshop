@@ -430,7 +430,7 @@ The test script uses `swaig-test` (a CLI tool bundled with each SDK) to validate
 
 ## Section 2: SignalWire Account Setup (10 min)
 
-SignalWire is the platform that connects your AI agent to the phone network. Their AI Agents SDK is what we'll use to build our agent, and their cloud handles all the telephony, speech-to-text, text-to-speech, and AI orchestration.
+SignalWire is the platform that connects your AI agent to the phone network. Their SDK is what we'll use to build our agent, and their cloud handles all the telephony, speech-to-text, text-to-speech, and AI orchestration.
 
 ### Step 1: Create a SignalWire Account
 
@@ -594,6 +594,8 @@ You've completed the shared setup. Now pick your language and follow the languag
 | **Perl** | [perl/README.md](perl/README.md) | `SignalWire` (CPAN) |
 | **Java** | [java/README.md](java/README.md) | `com.signalwire:signalwire-sdk` (Maven) |
 | **C++** | [cpp/README.md](cpp/README.md) | `signalwire-cpp` |
+| **.NET (C#)** | [dotnet/README.md](dotnet/README.md) | `SignalWire.Sdk` (NuGet) |
+| **PHP** | [php/README.md](php/README.md) | `signalwire/sdk` (Composer) |
 
 Each language-specific guide covers:
 
@@ -652,7 +654,7 @@ Skills are pre-built capabilities that ship with the SDK. Adding one is a single
 
 ## Cross-Language API Reference
 
-The SignalWire SDK is available in all seven languages. The concepts are identical -- only the syntax differs. Here's a side-by-side comparison of the core API calls:
+The SignalWire SDK is available in all nine languages. The concepts are identical -- only the syntax differs. Here's a side-by-side comparison of the core API calls:
 
 ### Creating an Agent
 
@@ -665,6 +667,8 @@ The SignalWire SDK is available in all seven languages. The concepts are identic
 | Perl | `AgentBase->new(name => "...")` |
 | Java | `AgentBase.builder().name("...").build()` |
 | C++ | `AgentBase("name", "/route")` |
+| .NET (C#) | `new AgentBase(new AgentOptions { Name = "..." })` |
+| PHP | `new AgentBase(name: "...")` |
 
 ### Adding a Prompt Section
 
@@ -677,6 +681,8 @@ The SignalWire SDK is available in all seven languages. The concepts are identic
 | Perl | `prompt_add_section("Title", "body")` |
 | Java | `promptAddSection("Title", "body")` |
 | C++ | `prompt_add_section("Title", "body")` |
+| .NET (C#) | `PromptAddSection("Title", "body")` |
+| PHP | `$agent->promptAddSection("Title", "body")` |
 
 ### Defining a Tool (Custom Function)
 
@@ -689,6 +695,8 @@ The SignalWire SDK is available in all seven languages. The concepts are identic
 | Perl | `define_tool(name =>, ...)` |
 | Java | `defineTool(name, desc, params, handler)` |
 | C++ | `define_tool(name, desc, params, handler)` |
+| .NET (C#) | `DefineTool(name, desc, params, handler)` |
+| PHP | `$agent->defineTool(name, desc, params, handler)` |
 
 ### Adding a Skill
 
@@ -701,6 +709,8 @@ The SignalWire SDK is available in all seven languages. The concepts are identic
 | Perl | `add_skill("datetime")` |
 | Java | `addSkill("datetime")` |
 | C++ | `add_skill("datetime")` |
+| .NET (C#) | `AddSkill("datetime")` |
+| PHP | `$agent->addSkill("datetime")` |
 
 ### Running the Agent
 
@@ -713,6 +723,8 @@ The SignalWire SDK is available in all seven languages. The concepts are identic
 | Perl | `$agent->run` |
 | Java | `agent.run()` |
 | C++ | `agent.run()` |
+| .NET (C#) | `agent.Run()` |
+| PHP | `$agent->run()` |
 
 ---
 
@@ -744,8 +756,14 @@ workshop/
 ├── java/
 │   ├── README.md          # Java-specific guide
 │   └── steps/             # Checkpoint files for each section
-└── cpp/
-    ├── README.md          # C++-specific guide
+├── cpp/
+│   ├── README.md          # C++-specific guide
+│   └── steps/             # Checkpoint files for each section
+├── dotnet/
+│   ├── README.md          # .NET (C#)-specific guide
+│   └── steps/             # Checkpoint files for each section
+└── php/
+    ├── README.md          # PHP-specific guide
     └── steps/             # Checkpoint files for each section
 ```
 
