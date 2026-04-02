@@ -8,9 +8,9 @@ use JSON;
 use File::Path qw(make_path);
 use POSIX qw(strftime);
 use HTTP::Tiny;
-use SignalWire::Agents;
-use SignalWire::Agents::Agent::AgentBase;
-use SignalWire::Agents::SWAIG::FunctionResult;
+use SignalWire;
+use SignalWire::Agent::AgentBase;
+use SignalWire::SWAIG::FunctionResult;
 
 # --- Load .env file ---
 if (-f '.env') {
@@ -78,7 +78,7 @@ my @JOKES = (
 {
     package JokeAgent;
     use Moo;
-    extends 'SignalWire::Agents::Agent::AgentBase';
+    extends 'SignalWire::Agent::AgentBase';
 
     sub BUILD {
         my ($self) = @_;
@@ -116,7 +116,7 @@ my @JOKES = (
             handler     => sub {
                 my ($args, $raw_data) = @_;
                 my $joke = $JOKES[int(rand(scalar @JOKES))];
-                return SignalWire::Agents::SWAIG::FunctionResult->new("Here's a joke: $joke");
+                return SignalWire::SWAIG::FunctionResult->new("Here's a joke: $joke");
             },
         );
 

@@ -191,7 +191,7 @@ curl -s -H "X-Api-Key: YOUR_API_NINJAS_KEY" https://api.api-ninjas.com/v1/dadjok
 - Added a shared `HttpClient` instance (Java's built-in HTTP client, thread-safe and reusable)
 - The `tellJoke` method calls the API Ninjas endpoint using `HttpRequest` and `HttpResponse`
 - We read the API key from `System.getenv()` (your `env.sh` file)
-- Gson (included as a transitive dependency from `signalwire-agents`) parses the JSON response
+- Gson (included as a transitive dependency from `@signalwire/sdk`) parses the JSON response
 - There's error handling -- if the API is down or the key is wrong, the agent says something graceful instead of crashing
 - The handler is now a method reference `JokeAgent::tellJoke` instead of an inline lambda
 

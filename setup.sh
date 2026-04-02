@@ -15,7 +15,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SDK_DIR="$SCRIPT_DIR/sdks"
 REPO_BASE="https://github.com/signalwire"
 
-ALL_LANGS=(python typescript go ruby perl java cpp)
+ALL_LANGS=(python typescript go ruby perl java cpp dotnet php)
 
 # Parse flags and language arguments
 AUTO_INSTALL=false
@@ -89,13 +89,13 @@ lang_enabled() {
 
 clone_sdk() {
     local lang="$1"
-    local target="$SDK_DIR/signalwire-agents-${lang}"
+    local target="$SDK_DIR/signalwire-${lang}"
     if [ -d "$target" ]; then
-        info "Updating signalwire-agents-${lang}..."
-        (cd "$target" && git pull --ff-only -q 2>/dev/null) || warn "Could not update signalwire-agents-${lang} (offline?)"
+        info "Updating signalwire-${lang}..."
+        (cd "$target" && git pull --ff-only -q 2>/dev/null) || warn "Could not update signalwire-${lang} (offline?)"
     else
-        info "Cloning signalwire-agents-${lang}..."
-        git clone --depth 1 "${REPO_BASE}/signalwire-agents-${lang}.git" "$target"
+        info "Cloning signalwire-${lang}..."
+        git clone --depth 1 "${REPO_BASE}/signalwire-${lang}.git" "$target"
     fi
 }
 
@@ -156,6 +156,8 @@ install_deps() {
     local missing_apt=()
     local need_node=false
     local need_go=false
+    local need_dotnet=false
+    local need_composer=false
     local need_bundler=false
     local missing_names=()
 
@@ -261,10 +263,39 @@ install_deps() {
         fi
     fi
 
+    if lang_enabled dotnet; then
+        if ! command -v dotnet &>/dev/null; then
+            if [ "$PLATFORM" = macos ]; then
+                missing_brew+=(dotnet@8); missing_names+=("dotnet@8")
+            else
+                need_dotnet=true; missing_names+=("dotnet-sdk-8.0 (via Microsoft repo)")
+            fi
+        fi
+    fi
+
+    if lang_enabled php; then
+        if ! command -v php &>/dev/null; then
+            if [ "$PLATFORM" = macos ]; then
+                missing_brew+=(php); missing_names+=("php")
+            else
+                missing_apt+=(php-cli php-mbstring php-xml php-curl); missing_names+=("php + extensions")
+            fi
+        fi
+        if ! command -v composer &>/dev/null; then
+            if [ "$PLATFORM" = macos ]; then
+                missing_brew+=(composer); missing_names+=("composer")
+            else
+                need_composer=true; missing_names+=("composer (via installer)")
+            fi
+        fi
+    fi
+
     # ── Nothing missing? ──
     local total=$(( ${#missing_brew[@]} + ${#missing_apt[@]} ))
-    [ "$need_node" = true ] && total=$((total + 1))
-    [ "$need_go" = true ]   && total=$((total + 1))
+    [ "$need_node" = true ]     && total=$((total + 1))
+    [ "$need_go" = true ]       && total=$((total + 1))
+    [ "$need_dotnet" = true ]   && total=$((total + 1))
+    [ "$need_composer" = true ] && total=$((total + 1))
     if [ "$total" -eq 0 ] && [ "$need_bundler" = false ]; then
         ok "All dependencies already installed"
         return 0
@@ -335,6 +366,26 @@ install_deps() {
                 echo 'export PATH="/usr/local/go/bin:$PATH"' >> ~/.bashrc
                 info "Added Go to ~/.bashrc — run 'source ~/.bashrc' in new shells"
             fi
+        fi
+
+        # .NET SDK via Microsoft repo
+        if [ "$need_dotnet" = true ]; then
+            info "Installing .NET SDK 8.0 via Microsoft repo..."
+            wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs 2>/dev/null || echo 24.04)/packages-microsoft-prod.deb" \
+                -O /tmp/packages-microsoft-prod.deb
+            sudo dpkg -i /tmp/packages-microsoft-prod.deb
+            rm -f /tmp/packages-microsoft-prod.deb
+            sudo apt-get update -qq
+            sudo apt-get install -y dotnet-sdk-8.0
+            ok ".NET SDK 8.0 installed"
+        fi
+
+        # Composer via official installer
+        if [ "$need_composer" = true ] && command -v php &>/dev/null; then
+            info "Installing Composer..."
+            curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer 2>/dev/null \
+                || sudo bash -c 'curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer'
+            ok "Composer installed"
         fi
     fi
 
@@ -517,7 +568,7 @@ if lang_enabled python; then
             else
                 source "$SCRIPT_DIR/python/venv/bin/activate"
                 pip install -q -r "$SCRIPT_DIR/python/requirements.txt"
-                pip install -q -e "$SDK_DIR/signalwire-agents-python"
+                pip install -q -e "$SDK_DIR/signalwire-python"
                 ok "Python SDK installed (editable mode) — activate with: source python/venv/bin/activate"
             fi
         fi
@@ -532,7 +583,7 @@ if lang_enabled typescript; then
     if check_tool node TypeScript && check_tool npm TypeScript; then
         nodever=$(node -v 2>/dev/null | sed 's/^v//')
         if check_version node "18.0.0" "$nodever" TypeScript; then
-            (cd "$SDK_DIR/signalwire-agents-typescript" && npm install --silent && npm run build --silent)
+            (cd "$SDK_DIR/signalwire-typescript" && npm install --silent && npm run build --silent)
             (cd "$SCRIPT_DIR/typescript" && npm install --silent)
             ok "TypeScript SDK built and linked"
         fi
@@ -570,7 +621,7 @@ fi
 if lang_enabled perl; then
     info "Setting up Perl..."
     if check_tool perl Perl; then
-        PERL_LOCAL="$SDK_DIR/signalwire-agents-perl/local"
+        PERL_LOCAL="$SDK_DIR/signalwire-perl/local"
         PERL_LOCAL_BIN="$PERL_LOCAL/bin"
         mkdir -p "$PERL_LOCAL_BIN"
 
@@ -592,7 +643,7 @@ if lang_enabled perl; then
 
         PERL_DEPS_OK=true
         if [ -n "$CPANM" ]; then
-            $CPANM --quiet --notest --local-lib "$PERL_LOCAL" --installdeps "$SDK_DIR/signalwire-agents-perl" \
+            $CPANM --quiet --notest --local-lib "$PERL_LOCAL" --installdeps "$SDK_DIR/signalwire-perl" \
                 || { warn "cpanm installdeps for SDK failed — re-run without --quiet for details"; PERL_DEPS_OK=false; }
             (cd "$SCRIPT_DIR/perl" && $CPANM --quiet --notest --local-lib "$PERL_LOCAL" --installdeps .) \
                 || { warn "cpanm installdeps for workshop failed"; PERL_DEPS_OK=false; }
@@ -601,7 +652,7 @@ if lang_enabled perl; then
         fi
 
         # Create symlink: perl/lib -> SDK lib directory
-        ln -sfn "../sdks/signalwire-agents-perl/lib" "$SCRIPT_DIR/perl/lib"
+        ln -sfn "../sdks/signalwire-perl/lib" "$SCRIPT_DIR/perl/lib"
         ok "Perl SDK symlinked at perl/lib"
         if [ "$PERL_DEPS_OK" = true ]; then
             ok "Perl deps installed to $PERL_LOCAL"
@@ -622,9 +673,9 @@ if lang_enabled java; then
         GRADLE_CMD="$SCRIPT_DIR/java/gradlew"
     elif command -v gradle &>/dev/null; then
         GRADLE_CMD="gradle"
-    elif [ -f "$SDK_DIR/signalwire-agents-java/gradlew" ]; then
-        chmod +x "$SDK_DIR/signalwire-agents-java/gradlew"
-        GRADLE_CMD="$SDK_DIR/signalwire-agents-java/gradlew"
+    elif [ -f "$SDK_DIR/signalwire-java/gradlew" ]; then
+        chmod +x "$SDK_DIR/signalwire-java/gradlew"
+        GRADLE_CMD="$SDK_DIR/signalwire-java/gradlew"
     fi
 
     if [ -n "$GRADLE_CMD" ]; then
@@ -679,16 +730,16 @@ if lang_enabled java; then
         if [ "${javaver:-0}" -lt 21 ]; then
             warn "Java 21+ required but found version ${javaver_raw:-unknown}"
         else
-            (cd "$SDK_DIR/signalwire-agents-java" && $GRADLE_CMD jar --console=plain -q)
+            (cd "$SDK_DIR/signalwire-java" && $GRADLE_CMD jar --console=plain -q)
             mkdir -p "$SCRIPT_DIR/java/libs"
-            cp "$SDK_DIR/signalwire-agents-java/build/libs/signalwire-agents-"*.jar \
+            cp "$SDK_DIR/signalwire-java/build/libs/signalwire-"*.jar \
                "$SCRIPT_DIR/java/libs/" 2>/dev/null || warn "Could not copy SDK jar"
             # Copy gradlew wrapper into java/ so users don't need system gradle
             if [ ! -f "$SCRIPT_DIR/java/gradlew" ]; then
-                cp "$SDK_DIR/signalwire-agents-java/gradlew" "$SCRIPT_DIR/java/gradlew"
+                cp "$SDK_DIR/signalwire-java/gradlew" "$SCRIPT_DIR/java/gradlew"
                 chmod +x "$SCRIPT_DIR/java/gradlew"
                 mkdir -p "$SCRIPT_DIR/java/gradle/wrapper"
-                cp "$SDK_DIR/signalwire-agents-java/gradle/wrapper/"* "$SCRIPT_DIR/java/gradle/wrapper/"
+                cp "$SDK_DIR/signalwire-java/gradle/wrapper/"* "$SCRIPT_DIR/java/gradle/wrapper/"
             fi
             ok "Java SDK jar built and copied to java/libs/"
         fi
@@ -703,14 +754,47 @@ fi
 if lang_enabled cpp; then
     info "Setting up C++..."
     if check_tool cmake C++; then
-        SDK_CPP="$SDK_DIR/signalwire-agents-cpp"
-        if [ ! -f "$SDK_CPP/build/libsignalwire_agents.a" ]; then
+        SDK_CPP="$SDK_DIR/signalwire-cpp"
+        if [ ! -f "$SDK_CPP/build/libsignalwire.a" ]; then
             mkdir -p "$SDK_CPP/build"
             (cd "$SDK_CPP/build" && cmake .. -DCMAKE_BUILD_TYPE=Release 2>&1 | tail -3 && \
              make -j"$NCPU" 2>&1 | tail -3)
             ok "C++ SDK built"
         else
             ok "C++ SDK already built"
+        fi
+    fi
+    echo ""
+fi
+
+# ── .NET ────────────────────────────────────────────────────────────────────
+
+if lang_enabled dotnet; then
+    info "Setting up .NET..."
+    if check_tool dotnet .NET; then
+        dotnetver=$(dotnet --version 2>/dev/null | cut -d. -f1)
+        if [ "${dotnetver:-0}" -ge 8 ]; then
+            # Build only net8.0 target (SDK multi-targets net8.0/net9.0/net10.0)
+            (cd "$SDK_DIR/signalwire-dotnet" && dotnet build src/SignalWire/SignalWire.csproj -c Release -p:TargetFrameworks=net8.0 --nologo -v q 2>&1 | tail -3)
+            ok ".NET SDK built"
+        else
+            warn ".NET 8.0+ required but found $(dotnet --version 2>/dev/null || echo unknown)"
+        fi
+    fi
+    echo ""
+fi
+
+# ── PHP ─────────────────────────────────────────────────────────────────────
+
+if lang_enabled php; then
+    info "Setting up PHP..."
+    if check_tool php PHP; then
+        phpver=$(php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;' 2>/dev/null || echo "0.0")
+        if check_version php "8.1" "$phpver" PHP; then
+            if check_tool composer PHP; then
+                (cd "$SDK_DIR/signalwire-php" && composer install --quiet --no-interaction 2>&1 | tail -3)
+                ok "PHP SDK dependencies installed"
+            fi
         fi
     fi
     echo ""
@@ -742,9 +826,11 @@ for lang in "${LANGS[@]}"; do
         typescript) echo "  TypeScript: cd typescript && npx tsx steps/step04_hello_agent.ts" ;;
         go)         echo "  Go:         cd go && go run ./steps/step04_hello_agent" ;;
         ruby)       echo "  Ruby:       cd ruby && bundle exec ruby steps/step04_hello_agent.rb" ;;
-        perl)       echo "  Perl:       cd perl && PERL5LIB=../sdks/signalwire-agents-perl/local/lib/perl5 perl steps/step04_hello_agent.pl" ;;
+        perl)       echo "  Perl:       cd perl && PERL5LIB=../sdks/signalwire-perl/local/lib/perl5 perl steps/step04_hello_agent.pl" ;;
         java)       echo "  Java:       cd java && source env.sh && cp steps/Step04HelloAgent.java src/main/java/HelloAgent.java && ./gradlew run -PmainClass=HelloAgent --console=plain" ;;
         cpp)        echo "  C++:        cd cpp && cp steps/step04_hello_agent.cpp agent.cpp && cd build && cmake .. && make && ./agent" ;;
+        dotnet)     echo "  .NET:       cd dotnet && dotnet run" ;;
+        php)        echo "  PHP:        cd php && php steps/step04_hello_agent.php" ;;
     esac
 done
 

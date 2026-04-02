@@ -38,7 +38,7 @@ def check_ngrok():
 
 check_ngrok()
 
-from signalwire_agents import AgentBase
+from signalwire import AgentBase
 
 class HelloAgent(AgentBase):
     def __init__(self):

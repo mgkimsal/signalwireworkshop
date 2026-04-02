@@ -112,7 +112,7 @@ Use whatever values you set for `SWML_BASIC_AUTH_USER` and `SWML_BASIC_AUTH_PASS
 
 You should see SWML JSON output containing your prompt text and voice settings.
 
-> **Checkpoint:** You see SWML JSON output from curl. The JSON contains your prompt text and voice settings. If the build fails, check that `SIGNALWIRE_SDK_DIR` points to the right location and that you built the SDK first (`libsignalwire_agents.a` exists). If curl hangs, make sure the agent is running.
+> **Checkpoint:** You see SWML JSON output from curl. The JSON contains your prompt text and voice settings. If the build fails, check that `SIGNALWIRE_SDK_DIR` points to the right location and that you built the SDK first (`libsignalwire.a` exists). If curl hangs, make sure the agent is running.
 
 ---
 
@@ -437,7 +437,7 @@ You've built a working AI phone agent with four different capabilities using thr
 - **Add SIP routing** -- `agent.enable_sip_routing(true)` for internal extensions
 - **Deploy for real** -- containerize with Docker and run on a cloud VM (no more ngrok)
 
-Check out the [signalwire-agents-cpp examples](https://github.com/signalwire/signalwire-agents-cpp/tree/main/examples) for more patterns and the SDK README for the full API reference.
+Check out the [signalwire-cpp examples](https://github.com/signalwire/signalwire-cpp/tree/main/examples) for more patterns and the SDK README for the full API reference.
 
 ---
 
@@ -472,7 +472,7 @@ cd build && make && ./agent
 
 | Problem | Fix |
 |---------|-----|
-| `libsignalwire_agents.a` not found | Rebuild the SDK: `cd signalwire-agents-cpp/build && cmake .. && make` |
+| `libsignalwire.a` not found | Rebuild the SDK: `cd signalwire-cpp/build && cmake .. && make` |
 | OpenSSL not found | macOS: `brew install openssl`; Linux: `apt install libssl-dev` |
 | `cmake ..` fails | Check `SIGNALWIRE_SDK_DIR` points to the SDK repo root |
 | Agent starts but ngrok not detected | Make sure ngrok is running: `ngrok http 3000 --url your-domain.ngrok-free.app` |

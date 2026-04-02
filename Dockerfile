@@ -3,10 +3,16 @@ FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PATH="/usr/local/go/bin:${PATH}"
 
-# ── Add external repos (NodeSource for Node 20, ngrok) ─────────────────────
+# ── Add external repos (NodeSource, Microsoft .NET, ngrok) ─────────────────
 RUN apt-get update \
-    && apt-get install -y ca-certificates curl gnupg \
+    && apt-get install -y ca-certificates curl gnupg wget \
+    # NodeSource for Node.js 20
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    # Microsoft .NET repo
+    && wget -q "https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb" \
+       -O /tmp/packages-microsoft-prod.deb \
+    && dpkg -i /tmp/packages-microsoft-prod.deb && rm /tmp/packages-microsoft-prod.deb \
+    # ngrok repo
     && curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
        | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
     && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" \
@@ -29,9 +35,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-21-jdk-headless \
     # C++ toolchain
     cmake g++ libcurl4-openssl-dev nlohmann-json3-dev \
+    # .NET 8.0
+    dotnet-sdk-8.0 \
+    # PHP + extensions
+    php-cli php-mbstring php-xml php-curl \
     # ngrok
     ngrok \
     && gem install bundler --no-document \
+    # Composer for PHP
+    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
     && rm -rf /var/lib/apt/lists/*
 
 # ── Go (official tarball — apt version is too old) ──────────────────────────

@@ -7,7 +7,7 @@
 import 'dotenv/config';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { AgentBase, SwaigFunctionResult } from 'signalwire-agents';
+import { AgentBase, FunctionResult } from '@signalwire/sdk';
 
 // Auto-detect ngrok tunnel and set SWML_PROXY_URL_BASE
 async function checkNgrok(): Promise<string> {
@@ -86,7 +86,7 @@ agent.defineTool({
   parameters: {},
   handler: () => {
     const joke = JOKES[Math.floor(Math.random() * JOKES.length)];
-    return new SwaigFunctionResult(`Here's a joke: ${joke}`);
+    return new FunctionResult(`Here's a joke: ${joke}`);
   },
 });
 

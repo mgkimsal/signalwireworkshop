@@ -5,12 +5,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ---- Locate the SignalWire Agents C++ SDK ----
-# Set SIGNALWIRE_SDK_DIR to the root of the cloned signalwire-agents-cpp repo.
-# Example:  cmake .. -DSIGNALWIRE_SDK_DIR=$HOME/signalwire-agents-cpp
+# Set SIGNALWIRE_SDK_DIR to the root of the cloned signalwire-cpp repo.
+# Example:  cmake .. -DSIGNALWIRE_SDK_DIR=$HOME/signalwire-cpp
 if(NOT DEFINED SIGNALWIRE_SDK_DIR)
     # Default: assume the SDK lives next to the workshop repo
-    set(SIGNALWIRE_SDK_DIR "${CMAKE_SOURCE_DIR}/../sdks/signalwire-agents-cpp"
-        CACHE PATH "Path to signalwire-agents-cpp repo root")
+    set(SIGNALWIRE_SDK_DIR "${CMAKE_SOURCE_DIR}/../sdks/signalwire-cpp"
+        CACHE PATH "Path to signalwire-cpp repo root")
 endif()
 
 # Resolve to absolute so the message is unambiguous
@@ -20,7 +20,7 @@ message(STATUS "Using SignalWire SDK at: ${SIGNALWIRE_SDK_DIR}")
 if(NOT EXISTS "${SIGNALWIRE_SDK_DIR}/include/signalwire/agent/agent_base.hpp")
     message(FATAL_ERROR
         "Cannot find SignalWire SDK headers at ${SIGNALWIRE_SDK_DIR}.\n"
-        "Clone the repo and pass -DSIGNALWIRE_SDK_DIR=/path/to/signalwire-agents-cpp")
+        "Clone the repo and pass -DSIGNALWIRE_SDK_DIR=/path/to/signalwire-cpp")
 endif()
 
 # SDK headers + vendored deps (nlohmann/json, cpp-httplib)
@@ -28,10 +28,10 @@ include_directories(${SIGNALWIRE_SDK_DIR}/include)
 include_directories(${SIGNALWIRE_SDK_DIR}/deps)
 
 # Pre-built SDK library
-# After building the SDK (cd signalwire-agents-cpp/build && cmake .. && make),
-# the static library lives at signalwire-agents-cpp/build/libsignalwire_agents.a
-set(SIGNALWIRE_SDK_LIB "${SIGNALWIRE_SDK_DIR}/build/libsignalwire_agents.a"
-    CACHE FILEPATH "Path to libsignalwire_agents.a")
+# After building the SDK (cd signalwire-cpp/build && cmake .. && make),
+# the static library lives at signalwire-cpp/build/libsignalwire.a
+set(SIGNALWIRE_SDK_LIB "${SIGNALWIRE_SDK_DIR}/build/libsignalwire.a"
+    CACHE FILEPATH "Path to libsignalwire.a")
 
 if(NOT EXISTS "${SIGNALWIRE_SDK_LIB}")
     message(FATAL_ERROR

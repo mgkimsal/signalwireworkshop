@@ -1,6 +1,6 @@
 # Build Your First AI Phone Agent: A Hands-On Workshop
 
-> **Duration:** ~2 hours | **Level:** Beginner | **Languages:** Python, TypeScript, Ruby, Go, Perl, Java, C++
+> **Duration:** ~2 hours | **Level:** Beginner | **Languages:** Python, TypeScript, Ruby, Go, Perl, Java, C++, .NET, PHP
 >
 > By the end of this workshop, you'll have a live AI assistant on a real phone number that tells jokes, reports weather, knows the time, and does math -- all built by you from scratch.
 
@@ -8,7 +8,7 @@
 
 ## Section 1: Welcome and What We're Building (5 min)
 
-Welcome to the SignalWire AI Agents SDK workshop! Over the next two hours, you're going to build something that sounds complicated but is surprisingly approachable: **a voice AI agent that answers a real phone number**.
+Welcome to the SignalWire SDK workshop! Over the next two hours, you're going to build something that sounds complicated but is surprisingly approachable: **a voice AI agent that answers a real phone number**.
 
 Here's what your finished agent will do:
 
@@ -65,6 +65,8 @@ Pick your platform below, then run `setup.sh` -- it detects what's missing and o
 | Perl | 5.20+ | 5.38 |
 | Java | 21+ | 21 LTS |
 | C++ | C++17 compiler | GCC 12+ or Clang 15+ |
+| .NET (C#) | 8.0+ | 8.0 LTS |
+| PHP | 8.1+ | 8.3 |
 
 You only need the runtime(s) for the language(s) you plan to use. Most people pick one or two.
 
@@ -136,7 +138,7 @@ cd workshop
 docker compose build
 ```
 
-The first build takes a few minutes -- it downloads Ubuntu 24.04 and installs Python, Node.js, Go, Ruby, Perl, Java 21, C++, and ngrok. After the first build, starting is instant.
+The first build takes a few minutes -- it downloads Ubuntu 24.04 and installs Python, Node.js, Go, Ruby, Perl, Java 21, C++, .NET 8, PHP, and ngrok. After the first build, starting is instant.
 
 #### 3. Start the Workshop Environment
 
@@ -294,6 +296,8 @@ brew install ruby                # Ruby
 brew install perl cpanminus      # Perl
 brew install openjdk@21          # Java
 brew install cmake               # C++
+brew install dotnet@8            # .NET (C#)
+brew install php composer        # PHP
 ```
 
 #### Linux / WSL (apt)
@@ -308,6 +312,21 @@ sudo apt install -y ruby-full && sudo gem install bundler        # Ruby
 sudo apt install -y perl cpanminus                               # Perl
 sudo apt install -y openjdk-21-jdk                               # Java
 sudo apt install -y cmake g++ libcurl4-openssl-dev nlohmann-json3-dev  # C++
+sudo apt install -y php-cli php-mbstring php-xml php-curl             # PHP
+```
+
+**.NET (Linux):** Add the Microsoft repository, then install:
+
+```bash
+wget https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
+sudo dpkg -i /tmp/packages-microsoft-prod.deb && rm /tmp/packages-microsoft-prod.deb
+sudo apt update && sudo apt install -y dotnet-sdk-8.0
+```
+
+**Composer (Linux):** Install PHP's package manager:
+
+```bash
+curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
 ```
 
 **Node.js (Linux):** The default apt package is often too old. Use NodeSource:
@@ -350,6 +369,8 @@ The `setup.sh` script automates the entire SDK setup process. Here's what it doe
 | **Perl** | Installs cpanm if missing, installs deps to the SDK's `local/` directory, symlinks `perl/lib` to the SDK |
 | **Java** | Auto-detects Java 21 (Homebrew on macOS, `/usr/lib/jvm` on Linux, `JAVA_HOME`, or system default), builds the SDK jar with Gradle, copies it to `java/libs/` |
 | **C++** | Builds the SDK static library with CMake |
+| **.NET** | Builds the SDK with `dotnet build` |
+| **PHP** | Runs `composer install` for the SDK |
 
 You can run it for all languages or just the ones you need:
 
@@ -566,13 +587,13 @@ You've completed the shared setup. Now pick your language and follow the languag
 
 | Language | Guide | SDK |
 |----------|-------|-----|
-| **Python** | [python/README.md](python/README.md) | `signalwire-agents` (PyPI) |
-| **TypeScript** | [typescript/README.md](typescript/README.md) | `signalwire-agents` (npm) |
-| **Ruby** | [ruby/README.md](ruby/README.md) | `signalwire-agents` (RubyGems) |
-| **Go** | [go/README.md](go/README.md) | `github.com/signalwire/signalwire-agents-go` |
-| **Perl** | [perl/README.md](perl/README.md) | `SignalWire::Agents` (CPAN) |
-| **Java** | [java/README.md](java/README.md) | `com.signalwire:signalwire-agents` (Maven) |
-| **C++** | [cpp/README.md](cpp/README.md) | `signalwire-agents-cpp` |
+| **Python** | [python/README.md](python/README.md) | `signalwire` (PyPI) |
+| **TypeScript** | [typescript/README.md](typescript/README.md) | `@signalwire/sdk` (npm) |
+| **Ruby** | [ruby/README.md](ruby/README.md) | `signalwire` (RubyGems) |
+| **Go** | [go/README.md](go/README.md) | `github.com/signalwire/signalwire-go` |
+| **Perl** | [perl/README.md](perl/README.md) | `SignalWire` (CPAN) |
+| **Java** | [java/README.md](java/README.md) | `com.signalwire:signalwire-sdk` (Maven) |
+| **C++** | [cpp/README.md](cpp/README.md) | `signalwire-cpp` |
 
 Each language-specific guide covers:
 
@@ -631,7 +652,7 @@ Skills are pre-built capabilities that ship with the SDK. Adding one is a single
 
 ## Cross-Language API Reference
 
-The SignalWire AI Agents SDK is available in all seven languages. The concepts are identical -- only the syntax differs. Here's a side-by-side comparison of the core API calls:
+The SignalWire SDK is available in all seven languages. The concepts are identical -- only the syntax differs. Here's a side-by-side comparison of the core API calls:
 
 ### Creating an Agent
 
@@ -768,13 +789,15 @@ The agent you built today is a starting point. Here's a taste of what the SDK ca
 
 | Language | Repository |
 |----------|-----------|
-| Python | [github.com/signalwire/signalwire-agents-python](https://github.com/signalwire/signalwire-agents-python) |
-| TypeScript | [github.com/signalwire/signalwire-agents-typescript](https://github.com/signalwire/signalwire-agents-typescript) |
-| Ruby | [github.com/signalwire/signalwire-agents-ruby](https://github.com/signalwire/signalwire-agents-ruby) |
-| Go | [github.com/signalwire/signalwire-agents-go](https://github.com/signalwire/signalwire-agents-go) |
-| Perl | [github.com/signalwire/signalwire-agents-perl](https://github.com/signalwire/signalwire-agents-perl) |
-| Java | [github.com/signalwire/signalwire-agents-java](https://github.com/signalwire/signalwire-agents-java) |
-| C++ | [github.com/signalwire/signalwire-agents-cpp](https://github.com/signalwire/signalwire-agents-cpp) |
+| Python | [github.com/signalwire/signalwire-python](https://github.com/signalwire/signalwire-python) |
+| TypeScript | [github.com/signalwire/signalwire-typescript](https://github.com/signalwire/signalwire-typescript) |
+| Ruby | [github.com/signalwire/signalwire-ruby](https://github.com/signalwire/signalwire-ruby) |
+| Go | [github.com/signalwire/signalwire-go](https://github.com/signalwire/signalwire-go) |
+| Perl | [github.com/signalwire/signalwire-perl](https://github.com/signalwire/signalwire-perl) |
+| Java | [github.com/signalwire/signalwire-java](https://github.com/signalwire/signalwire-java) |
+| C++ | [github.com/signalwire/signalwire-cpp](https://github.com/signalwire/signalwire-cpp) |
+| .NET | [github.com/signalwire/signalwire-dotnet](https://github.com/signalwire/signalwire-dotnet) |
+| PHP | [github.com/signalwire/signalwire-php](https://github.com/signalwire/signalwire-php) |
 
 ### Other Resources
 
@@ -784,7 +807,7 @@ The agent you built today is a starting point. Here's a taste of what the SDK ca
 
 ### Congratulations
 
-You went from zero to a phone-callable AI assistant with four capabilities, built three different ways. You understand the core concepts of the SignalWire AI Agents SDK, and you have a working codebase to experiment with.
+You went from zero to a phone-callable AI assistant with four capabilities, built three different ways. You understand the core concepts of the SignalWire SDK, and you have a working codebase to experiment with.
 
 The agent running on your laptop right now is the same technology powering production voice AI systems. The patterns you learned today -- custom functions, DataMap, skills, structured prompts -- scale from this workshop project to enterprise deployments.
 

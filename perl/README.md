@@ -62,7 +62,7 @@ Key concepts in the code:
 
 - The `.env` loader parses `KEY=VALUE` lines into `%ENV` (Perl has no built-in dotenv).
 - `check_ngrok()` queries ngrok's local API to auto-discover the tunnel URL and set `SWML_PROXY_URL_BASE`. If ngrok isn't running yet (Section 5), it prints a message and moves on.
-- `HelloAgent` extends `SignalWire::Agents::Agent::AgentBase` using Moo. Configuration happens in `BUILD`.
+- `HelloAgent` extends `SignalWire::Agent::AgentBase` using Moo. Configuration happens in `BUILD`.
 - `add_language()` sets the voice, language code, and speech fillers.
 - `prompt_add_section()` gives the AI its instructions.
 - `set_post_prompt()` tells the AI to generate a summary after every call.
@@ -414,7 +414,7 @@ perl bin/swaig-test your_agent.pl --exec calc --expression "2+2"  # With argumen
 $self->define_tool(name => '...', description => '...', parameters => {...}, handler => sub { ... });
 
 # 2. DataMap (serverless, runs on SignalWire)
-my $dm = SignalWire::Agents::DataMap->new('name')->description('...')->parameter(...)->webhook(...)->output(...);
+my $dm = SignalWire::DataMap->new('name')->description('...')->parameter(...)->webhook(...)->output(...);
 $self->register_swaig_function($dm->to_swaig_function);
 
 # 3. Skill (pre-built, one line)

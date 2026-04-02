@@ -38,7 +38,7 @@ def check_ngrok():
 
 check_ngrok()
 
-from signalwire_agents import AgentBase, SwaigFunctionResult
+from signalwire import AgentBase, FunctionResult
 
 class JokeAgent(AgentBase):
     def __init__(self):
@@ -83,7 +83,7 @@ class JokeAgent(AgentBase):
     def on_tell_joke(self, args, raw_data):
         api_key = os.getenv("API_NINJAS_KEY", "")
         if not api_key:
-            return SwaigFunctionResult("Sorry, I can't access my joke book right now. My API key is missing.")
+            return FunctionResult("Sorry, I can't access my joke book right now. My API key is missing.")
 
         try:
             resp = requests.get(
@@ -94,10 +94,10 @@ class JokeAgent(AgentBase):
             resp.raise_for_status()
             jokes = resp.json()
             if jokes:
-                return SwaigFunctionResult(f"Here's a dad joke: {jokes[0]['joke']}")
-            return SwaigFunctionResult("I tried to find a joke but came up empty. That's... kind of a joke itself?")
+                return FunctionResult(f"Here's a dad joke: {jokes[0]['joke']}")
+            return FunctionResult("I tried to find a joke but came up empty. That's... kind of a joke itself?")
         except requests.RequestException:
-            return SwaigFunctionResult("Sorry, my joke service is taking a nap. Ask me again in a moment!")
+            return FunctionResult("Sorry, my joke service is taking a nap. Ask me again in a moment!")
 
     def on_summary(self, summary, raw_data):
         """Save post-prompt data to calls/ folder for debugging."""

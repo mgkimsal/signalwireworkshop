@@ -43,7 +43,7 @@ end
 
 check_ngrok
 
-require 'signalwire_agents'
+require 'signalwire'
 
 JOKES = [
   'Why do programmers prefer dark mode? Because light attracts bugs.',

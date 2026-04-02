@@ -7,7 +7,7 @@
 import 'dotenv/config';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { AgentBase, SwaigFunctionResult } from 'signalwire-agents';
+import { AgentBase, FunctionResult } from '@signalwire/sdk';
 
 // Auto-detect ngrok tunnel and set SWML_PROXY_URL_BASE
 async function checkNgrok(): Promise<string> {
@@ -76,7 +76,7 @@ agent.defineTool({
   handler: async () => {
     const apiKey = process.env['API_NINJAS_KEY'] ?? '';
     if (!apiKey) {
-      return new SwaigFunctionResult(
+      return new FunctionResult(
         "Sorry, I can't access my joke book right now. My API key is missing.",
       );
     }
@@ -89,13 +89,13 @@ agent.defineTool({
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const jokes = (await resp.json()) as { joke: string }[];
       if (jokes.length) {
-        return new SwaigFunctionResult(`Here's a dad joke: ${jokes[0].joke}`);
+        return new FunctionResult(`Here's a dad joke: ${jokes[0].joke}`);
       }
-      return new SwaigFunctionResult(
+      return new FunctionResult(
         "I tried to find a joke but came up empty. That's... kind of a joke itself?",
       );
     } catch {
-      return new SwaigFunctionResult(
+      return new FunctionResult(
         'Sorry, my joke service is taking a nap. Ask me again in a moment!',
       );
     }

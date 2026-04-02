@@ -39,7 +39,7 @@ def check_ngrok():
 
 check_ngrok()
 
-from signalwire_agents import AgentBase, SwaigFunctionResult
+from signalwire import AgentBase, FunctionResult
 
 JOKES = [
     "Why do programmers prefer dark mode? Because light attracts bugs.",
@@ -95,7 +95,7 @@ class JokeAgent(AgentBase):
 
     def on_tell_joke(self, args, raw_data):
         joke = random.choice(JOKES)
-        return SwaigFunctionResult(f"Here's a joke: {joke}")
+        return FunctionResult(f"Here's a joke: {joke}")
 
     def on_summary(self, summary, raw_data):
         """Save post-prompt data to calls/ folder for debugging."""

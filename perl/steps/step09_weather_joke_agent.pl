@@ -8,10 +8,10 @@ use JSON;
 use File::Path qw(make_path);
 use POSIX qw(strftime);
 use HTTP::Tiny;
-use SignalWire::Agents;
-use SignalWire::Agents::Agent::AgentBase;
-use SignalWire::Agents::DataMap;
-use SignalWire::Agents::SWAIG::FunctionResult;
+use SignalWire;
+use SignalWire::Agent::AgentBase;
+use SignalWire::DataMap;
+use SignalWire::SWAIG::FunctionResult;
 
 # --- Load .env file ---
 if (-f '.env') {
@@ -67,7 +67,7 @@ check_ngrok();
 {
     package WeatherJokeAgent;
     use Moo;
-    extends 'SignalWire::Agents::Agent::AgentBase';
+    extends 'SignalWire::Agent::AgentBase';
 
     sub BUILD {
         my ($self) = @_;
@@ -169,7 +169,7 @@ check_ngrok();
                 my ($args, $raw_data) = @_;
                 my $api_key = $ENV{API_NINJAS_KEY} // '';
                 if (!$api_key) {
-                    return SignalWire::Agents::SWAIG::FunctionResult->new(
+                    return SignalWire::SWAIG::FunctionResult->new(
                         'Sorry, my joke book is unavailable right now.'
                     );
                 }
@@ -183,16 +183,16 @@ check_ngrok();
                 if ($resp->{success}) {
                     my $jokes = eval { decode_json($resp->{content}) };
                     if ($jokes && ref $jokes eq 'ARRAY' && @$jokes) {
-                        return SignalWire::Agents::SWAIG::FunctionResult->new(
+                        return SignalWire::SWAIG::FunctionResult->new(
                             "Here's a dad joke: $jokes->[0]{joke}"
                         );
                     }
-                    return SignalWire::Agents::SWAIG::FunctionResult->new(
+                    return SignalWire::SWAIG::FunctionResult->new(
                         "I couldn't find a joke this time. Try again!"
                     );
                 }
 
-                return SignalWire::Agents::SWAIG::FunctionResult->new(
+                return SignalWire::SWAIG::FunctionResult->new(
                     'My joke service is taking a break. Try again in a moment!'
                 );
             },
@@ -203,7 +203,7 @@ check_ngrok();
         my ($self) = @_;
         my $api_key = $ENV{WEATHER_API_KEY} // '';
 
-        my $weather_dm = SignalWire::Agents::DataMap->new('get_weather')
+        my $weather_dm = SignalWire::DataMap->new('get_weather')
             ->description(
                 'Get the current weather for a city. '
                 . 'Use this when the caller asks about weather, temperature, or conditions.'
@@ -214,7 +214,7 @@ check_ngrok();
                 "https://api.weatherapi.com/v1/current.json?key=${api_key}&q=\${enc:args.city}"
             )
             ->output(
-                SignalWire::Agents::SWAIG::FunctionResult->new(
+                SignalWire::SWAIG::FunctionResult->new(
                     'Weather in ${args.city}: ${response.current.condition.text}, '
                     . '${response.current.temp_f} degrees Fahrenheit, '
                     . 'humidity ${response.current.humidity} percent. '
@@ -222,7 +222,7 @@ check_ngrok();
                 )
             )
             ->fallback_output(
-                SignalWire::Agents::SWAIG::FunctionResult->new(
+                SignalWire::SWAIG::FunctionResult->new(
                     "Sorry, I couldn't get the weather for \${args.city}. "
                     . 'Please check the city name and try again.'
                 )

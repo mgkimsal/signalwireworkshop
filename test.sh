@@ -249,11 +249,11 @@ swaig_test_file_dump_swml() {
     case "$lang" in
         python)
             (cd "$SCRIPT_DIR/python" && source venv/bin/activate && \
-             python3 -m signalwire_agents.cli.test_swaig "$file" --dump-swml --raw 2>/dev/null | sed -n '/^{/,$ p')
+             python3 -m signalwire.cli.test_swaig "$file" --dump-swml --raw 2>/dev/null | sed -n '/^{/,$ p')
             ;;
         typescript)
             (cd "$SCRIPT_DIR/typescript" && \
-             npx tsx "$SDK_DIR/signalwire-agents-typescript/src/cli/swaig-test.ts" "$file" --dump-swml --raw 2>/dev/null | sed -n '/^{/,$ p')
+             npx tsx "$SDK_DIR/signalwire-typescript/src/cli/swaig-test.ts" "$file" --dump-swml --raw 2>/dev/null | sed -n '/^{/,$ p')
             ;;
     esac
 }
@@ -263,11 +263,11 @@ swaig_test_file_list_tools() {
     case "$lang" in
         python)
             (cd "$SCRIPT_DIR/python" && source venv/bin/activate && \
-             python3 -m signalwire_agents.cli.test_swaig "$file" --list-tools 2>/dev/null)
+             python3 -m signalwire.cli.test_swaig "$file" --list-tools 2>/dev/null)
             ;;
         typescript)
             (cd "$SCRIPT_DIR/typescript" && \
-             npx tsx "$SDK_DIR/signalwire-agents-typescript/src/cli/swaig-test.ts" "$file" --list-tools 2>/dev/null)
+             npx tsx "$SDK_DIR/signalwire-typescript/src/cli/swaig-test.ts" "$file" --list-tools 2>/dev/null)
             ;;
     esac
 }
@@ -281,19 +281,19 @@ swaig_test_url() {
     local cmd
     case "$lang" in
         go)
-            cmd="cd '$SDK_DIR/signalwire-agents-go' && go run ./cmd/swaig-test --url '$url' $action"
+            cmd="cd '$SDK_DIR/signalwire-go' && go run ./cmd/swaig-test --url '$url' $action"
             ;;
         ruby)
-            cmd="'$SDK_DIR/signalwire-agents-ruby/bin/swaig-test' --url '$url' $action"
+            cmd="'$SDK_DIR/signalwire-ruby/bin/swaig-test' --url '$url' $action"
             ;;
         perl)
-            cmd="PERL5LIB='$SDK_DIR/signalwire-agents-perl/local/lib/perl5' perl '$SDK_DIR/signalwire-agents-perl/bin/swaig-test' --url '$url' $action"
+            cmd="PERL5LIB='$SDK_DIR/signalwire-perl/local/lib/perl5' perl '$SDK_DIR/signalwire-perl/bin/swaig-test' --url '$url' $action"
             ;;
         java)
-            cmd="'$SDK_DIR/signalwire-agents-java/bin/swaig-test' --url '$url' $action"
+            cmd="'$SDK_DIR/signalwire-java/bin/swaig-test' --url '$url' $action"
             ;;
         cpp)
-            cmd="'$SDK_DIR/signalwire-agents-cpp/bin/swaig-test' '$url' $action"
+            cmd="'$SDK_DIR/signalwire-cpp/bin/swaig-test' '$url' $action"
             ;;
     esac
     # portable timeout: macOS lacks `timeout`, use perl fallback
@@ -325,7 +325,7 @@ start_agent() {
             (cd "$SCRIPT_DIR/ruby" && exec bundle exec ruby "$file") >>"$logfile" 2>&1 &
             ;;
         perl)
-            (cd "$SCRIPT_DIR/perl" && PERL5LIB="$SDK_DIR/signalwire-agents-perl/local/lib/perl5${PERL5LIB:+:$PERL5LIB}" exec perl "$file") >>"$logfile" 2>&1 &
+            (cd "$SCRIPT_DIR/perl" && PERL5LIB="$SDK_DIR/signalwire-perl/local/lib/perl5${PERL5LIB:+:$PERL5LIB}" exec perl "$file") >>"$logfile" 2>&1 &
             ;;
         java)
             local cls
@@ -485,7 +485,7 @@ check_prereqs() {
 
 check_sdk() {
     local lang="$1"
-    [ -d "$SDK_DIR/signalwire-agents-${lang}" ]
+    [ -d "$SDK_DIR/signalwire-${lang}" ]
 }
 
 # ── Test: file-based (Python, TypeScript) ────────────────────────────────────
@@ -623,13 +623,13 @@ for lang in "${LANGS[@]}"; do
                     export PATH="$JAVA_HOME/bin:$PATH"
                 fi
             fi
-            if ! ls "$SCRIPT_DIR/java/libs/signalwire-agents-"*.jar &>/dev/null; then
+            if ! ls "$SCRIPT_DIR/java/libs/signalwire-"*.jar &>/dev/null; then
                 info "Building Java SDK jar..."
                 gcmd="$SCRIPT_DIR/java/gradlew"
                 [ -x "$gcmd" ] || gcmd="gradle"
-                if (cd "$SDK_DIR/signalwire-agents-java" && $gcmd jar --console=plain -q 2>/dev/null); then
+                if (cd "$SDK_DIR/signalwire-java" && $gcmd jar --console=plain -q 2>/dev/null); then
                     mkdir -p "$SCRIPT_DIR/java/libs"
-                    cp "$SDK_DIR/signalwire-agents-java/build/libs/signalwire-agents-"*.jar "$SCRIPT_DIR/java/libs/"
+                    cp "$SDK_DIR/signalwire-java/build/libs/signalwire-"*.jar "$SCRIPT_DIR/java/libs/"
                 else
                     skip "$lang: failed to build SDK jar"
                     continue
@@ -637,10 +637,10 @@ for lang in "${LANGS[@]}"; do
             fi
             ;;
         cpp)
-            if [ ! -f "$SDK_DIR/signalwire-agents-cpp/build/libsignalwire_agents.a" ]; then
+            if [ ! -f "$SDK_DIR/signalwire-cpp/build/libsignalwire.a" ]; then
                 info "Building C++ SDK..."
-                mkdir -p "$SDK_DIR/signalwire-agents-cpp/build"
-                if ! (cd "$SDK_DIR/signalwire-agents-cpp/build" && cmake .. -q 2>/dev/null && \
+                mkdir -p "$SDK_DIR/signalwire-cpp/build"
+                if ! (cd "$SDK_DIR/signalwire-cpp/build" && cmake .. -q 2>/dev/null && \
                       make -j"$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)" 2>/dev/null); then
                     skip "$lang: failed to build SDK"
                     continue

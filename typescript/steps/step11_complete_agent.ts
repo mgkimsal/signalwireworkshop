@@ -14,7 +14,7 @@
 import 'dotenv/config';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { AgentBase, SwaigFunctionResult, DataMap, DateTimeSkill, MathSkill } from 'signalwire-agents';
+import { AgentBase, FunctionResult, DataMap, DateTimeSkill, MathSkill } from '@signalwire/sdk';
 
 // ── ngrok auto-detection ────────────────────────────────────────────────
 
@@ -132,7 +132,7 @@ agent.defineTool({
   handler: async () => {
     const apiKey = process.env['API_NINJAS_KEY'] ?? '';
     if (!apiKey) {
-      return new SwaigFunctionResult('Sorry, my joke book is unavailable right now.');
+      return new FunctionResult('Sorry, my joke book is unavailable right now.');
     }
 
     try {
@@ -143,11 +143,11 @@ agent.defineTool({
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const jokes = (await resp.json()) as { joke: string }[];
       if (jokes.length) {
-        return new SwaigFunctionResult(`Here's a dad joke: ${jokes[0].joke}`);
+        return new FunctionResult(`Here's a dad joke: ${jokes[0].joke}`);
       }
-      return new SwaigFunctionResult("I couldn't find a joke this time. Try again!");
+      return new FunctionResult("I couldn't find a joke this time. Try again!");
     } catch {
-      return new SwaigFunctionResult(
+      return new FunctionResult(
         'My joke service is taking a break. Try again in a moment!',
       );
     }
@@ -176,7 +176,7 @@ const weatherDm = new DataMap('get_weather')
     `https://api.weatherapi.com/v1/current.json?key=${weatherApiKey}&q=\${enc:args.city}`,
   )
   .output(
-    new SwaigFunctionResult(
+    new FunctionResult(
       'Weather in ${args.city}: ${response.current.condition.text}, ' +
         '${response.current.temp_f} degrees Fahrenheit, ' +
         'humidity ${response.current.humidity} percent. ' +
@@ -184,7 +184,7 @@ const weatherDm = new DataMap('get_weather')
     ),
   )
   .fallbackOutput(
-    new SwaigFunctionResult(
+    new FunctionResult(
       "Sorry, I couldn't get the weather for ${args.city}. " +
         'Please check the city name and try again.',
     ),

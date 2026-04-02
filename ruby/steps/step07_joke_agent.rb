@@ -43,7 +43,7 @@ end
 
 check_ngrok
 
-require 'signalwire_agents'
+require 'signalwire'
 
 agent = SignalWireAgents::AgentBase.new(name: 'joke-agent', route: '/')
 

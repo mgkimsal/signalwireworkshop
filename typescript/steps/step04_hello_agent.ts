@@ -7,7 +7,7 @@
 import 'dotenv/config';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { AgentBase } from 'signalwire-agents';
+import { AgentBase } from '@signalwire/sdk';
 
 // Auto-detect ngrok tunnel and set SWML_PROXY_URL_BASE
 async function checkNgrok(): Promise<string> {

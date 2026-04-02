@@ -146,7 +146,7 @@ See [steps/step06_joke_agent.ts](steps/step06_joke_agent.ts)
 
 Let's look at the new pieces:
 
-- `SwaigFunctionResult` is how you return data from a SWAIG function. The AI takes this text and weaves it into its response.
+- `FunctionResult` is how you return data from a SWAIG function. The AI takes this text and weaves it into its response.
 - `defineTool()` registers the function. The `description` is critical -- it tells the AI *when* to call this function.
 - `parameters` defines what the AI should extract from the conversation. Our joke function doesn't need any input, so it's an empty object.
 - `functionFillers` are phrases the agent says while your function executes, so there's no awkward silence.
@@ -470,7 +470,7 @@ npx swaig-test your_agent.ts --exec calculate --expression "2+2"  # With argumen
 // 1. Custom function (full control, runs on your server)
 agent.defineTool({
   name: '...', description: '...', parameters: {},
-  handler: async (args) => new SwaigFunctionResult('...'),
+  handler: async (args) => new FunctionResult('...'),
 });
 
 // 2. DataMap (serverless, runs on SignalWire)

@@ -8,9 +8,9 @@
  *   curl -s -u workshop:PASS http://localhost:3000/ | python3 -m json.tool
  */
 
-import com.signalwire.agents.agent.AgentBase;
-import com.signalwire.agents.datamap.DataMap;
-import com.signalwire.agents.swaig.FunctionResult;
+import com.signalwire.sdk.agent.AgentBase;
+import com.signalwire.sdk.datamap.DataMap;
+import com.signalwire.sdk.swaig.FunctionResult;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 

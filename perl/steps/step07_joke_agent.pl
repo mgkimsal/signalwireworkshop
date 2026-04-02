@@ -8,9 +8,9 @@ use JSON;
 use File::Path qw(make_path);
 use POSIX qw(strftime);
 use HTTP::Tiny;
-use SignalWire::Agents;
-use SignalWire::Agents::Agent::AgentBase;
-use SignalWire::Agents::SWAIG::FunctionResult;
+use SignalWire;
+use SignalWire::Agent::AgentBase;
+use SignalWire::SWAIG::FunctionResult;
 
 # --- Load .env file ---
 if (-f '.env') {
@@ -66,7 +66,7 @@ check_ngrok();
 {
     package JokeAgent;
     use Moo;
-    extends 'SignalWire::Agents::Agent::AgentBase';
+    extends 'SignalWire::Agent::AgentBase';
 
     sub BUILD {
         my ($self) = @_;
@@ -104,7 +104,7 @@ check_ngrok();
                 my ($args, $raw_data) = @_;
                 my $api_key = $ENV{API_NINJAS_KEY} // '';
                 if (!$api_key) {
-                    return SignalWire::Agents::SWAIG::FunctionResult->new(
+                    return SignalWire::SWAIG::FunctionResult->new(
                         "Sorry, I can't access my joke book right now. My API key is missing."
                     );
                 }
@@ -118,16 +118,16 @@ check_ngrok();
                 if ($resp->{success}) {
                     my $jokes = eval { decode_json($resp->{content}) };
                     if ($jokes && ref $jokes eq 'ARRAY' && @$jokes) {
-                        return SignalWire::Agents::SWAIG::FunctionResult->new(
+                        return SignalWire::SWAIG::FunctionResult->new(
                             "Here's a dad joke: $jokes->[0]{joke}"
                         );
                     }
-                    return SignalWire::Agents::SWAIG::FunctionResult->new(
+                    return SignalWire::SWAIG::FunctionResult->new(
                         "I tried to find a joke but came up empty. That's... kind of a joke itself?"
                     );
                 }
 
-                return SignalWire::Agents::SWAIG::FunctionResult->new(
+                return SignalWire::SWAIG::FunctionResult->new(
                     "Sorry, my joke service is taking a nap. Ask me again in a moment!"
                 );
             },

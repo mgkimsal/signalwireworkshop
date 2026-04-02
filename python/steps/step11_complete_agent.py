@@ -49,8 +49,8 @@ def check_ngrok():
 
 check_ngrok()
 
-from signalwire_agents import AgentBase, SwaigFunctionResult
-from signalwire_agents.core.data_map import DataMap
+from signalwire import AgentBase, FunctionResult
+from signalwire.core.data_map import DataMap
 
 
 class CompleteAgent(AgentBase):
@@ -167,7 +167,7 @@ class CompleteAgent(AgentBase):
     def on_tell_joke(self, args, raw_data):
         api_key = os.getenv("API_NINJAS_KEY", "")
         if not api_key:
-            return SwaigFunctionResult(
+            return FunctionResult(
                 "Sorry, my joke book is unavailable right now."
             )
 
@@ -180,14 +180,14 @@ class CompleteAgent(AgentBase):
             resp.raise_for_status()
             jokes = resp.json()
             if jokes:
-                return SwaigFunctionResult(
+                return FunctionResult(
                     f"Here's a dad joke: {jokes[0]['joke']}"
                 )
-            return SwaigFunctionResult(
+            return FunctionResult(
                 "I couldn't find a joke this time. Try again!"
             )
         except requests.RequestException:
-            return SwaigFunctionResult(
+            return FunctionResult(
                 "My joke service is taking a break. Try again in a moment!"
             )
 
@@ -214,14 +214,14 @@ class CompleteAgent(AgentBase):
                 "https://api.weatherapi.com/v1/current.json"
                 f"?key={api_key}&q=${{enc:args.city}}"
             )
-            .output(SwaigFunctionResult(
+            .output(FunctionResult(
                 "Weather in ${args.city}: "
                 "${response.current.condition.text}, "
                 "${response.current.temp_f} degrees Fahrenheit, "
                 "humidity ${response.current.humidity} percent. "
                 "Feels like ${response.current.feelslike_f} degrees."
             ))
-            .fallback_output(SwaigFunctionResult(
+            .fallback_output(FunctionResult(
                 "Sorry, I couldn't get the weather for ${args.city}. "
                 "Please check the city name and try again."
             ))

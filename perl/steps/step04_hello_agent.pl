@@ -8,9 +8,9 @@ use JSON;
 use File::Path qw(make_path);
 use POSIX qw(strftime);
 use HTTP::Tiny;
-use SignalWire::Agents;
-use SignalWire::Agents::Agent::AgentBase;
-use SignalWire::Agents::SWAIG::FunctionResult;
+use SignalWire;
+use SignalWire::Agent::AgentBase;
+use SignalWire::SWAIG::FunctionResult;
 
 # --- Load .env file ---
 if (-f '.env') {
@@ -66,7 +66,7 @@ check_ngrok();
 {
     package HelloAgent;
     use Moo;
-    extends 'SignalWire::Agents::Agent::AgentBase';
+    extends 'SignalWire::Agent::AgentBase';
 
     sub BUILD {
         my ($self) = @_;

@@ -38,8 +38,8 @@ def check_ngrok():
 
 check_ngrok()
 
-from signalwire_agents import AgentBase, SwaigFunctionResult
-from signalwire_agents.core.data_map import DataMap
+from signalwire import AgentBase, FunctionResult
+from signalwire.core.data_map import DataMap
 
 class WeatherJokeAgent(AgentBase):
     def __init__(self):
@@ -127,7 +127,7 @@ class WeatherJokeAgent(AgentBase):
     def on_tell_joke(self, args, raw_data):
         api_key = os.getenv("API_NINJAS_KEY", "")
         if not api_key:
-            return SwaigFunctionResult("Sorry, my joke book is unavailable right now.")
+            return FunctionResult("Sorry, my joke book is unavailable right now.")
 
         try:
             resp = requests.get(
@@ -138,10 +138,10 @@ class WeatherJokeAgent(AgentBase):
             resp.raise_for_status()
             jokes = resp.json()
             if jokes:
-                return SwaigFunctionResult(f"Here's a dad joke: {jokes[0]['joke']}")
-            return SwaigFunctionResult("I couldn't find a joke this time. Try again!")
+                return FunctionResult(f"Here's a dad joke: {jokes[0]['joke']}")
+            return FunctionResult("I couldn't find a joke this time. Try again!")
         except requests.RequestException:
-            return SwaigFunctionResult("My joke service is taking a break. Try again in a moment!")
+            return FunctionResult("My joke service is taking a break. Try again in a moment!")
 
     def _register_weather_datamap(self):
         """Register weather lookup via DataMap (runs on SignalWire's servers)."""
@@ -158,13 +158,13 @@ class WeatherJokeAgent(AgentBase):
                 "GET",
                 f"https://api.weatherapi.com/v1/current.json?key={api_key}&q=${{enc:args.city}}"
             )
-            .output(SwaigFunctionResult(
+            .output(FunctionResult(
                 "Weather in ${args.city}: ${response.current.condition.text}, "
                 "${response.current.temp_f} degrees Fahrenheit, "
                 "humidity ${response.current.humidity} percent. "
                 "Feels like ${response.current.feelslike_f} degrees."
             ))
-            .fallback_output(SwaigFunctionResult(
+            .fallback_output(FunctionResult(
                 "Sorry, I couldn't get the weather for ${args.city}. "
                 "Please check the city name and try again."
             ))

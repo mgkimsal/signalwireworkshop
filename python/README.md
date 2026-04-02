@@ -166,7 +166,7 @@ SWAIG (SignalWire AI Gateway) functions are tools that the AI can decide to call
 
 Let's look at the new pieces:
 
-- `SwaigFunctionResult` is how you return data from a SWAIG function. The AI takes this text and weaves it into its response.
+- `FunctionResult` is how you return data from a SWAIG function. The AI takes this text and weaves it into its response.
 - `define_tool()` registers the function. The `description` is critical -- it tells the AI *when* to call this function.
 - `parameters` defines what the AI should extract from the conversation. Our joke function doesn't need any input, so it's an empty object.
 - `function_fillers` are phrases the agent says while your function executes, so there's no awkward silence.

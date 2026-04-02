@@ -11,10 +11,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/signalwire/signalwire-agents-go/pkg/agent"
-	"github.com/signalwire/signalwire-agents-go/pkg/datamap"
-	"github.com/signalwire/signalwire-agents-go/pkg/swaig"
-	_ "github.com/signalwire/signalwire-agents-go/pkg/skills/builtin"
+	"github.com/signalwire/signalwire-go/pkg/agent"
+	"github.com/signalwire/signalwire-go/pkg/datamap"
+	"github.com/signalwire/signalwire-go/pkg/swaig"
+	_ "github.com/signalwire/signalwire-go/pkg/skills/builtin"
 )
 
 // checkNgrok auto-detects an ngrok tunnel and sets SWML_PROXY_URL_BASE.
