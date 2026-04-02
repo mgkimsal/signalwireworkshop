@@ -147,8 +147,11 @@ Or install [Docker Desktop for Linux](https://docs.docker.com/desktop/install/li
 Open your terminal (Terminal on Mac, PowerShell on Windows, any terminal on Linux) and run:
 
 ```bash
+docker login
 docker run -it -p 3000:3000 -p 4040:4040 briankwest/workshop
 ```
+
+> **`docker login`** — you may be prompted to log in to Docker Hub (free account at [hub.docker.com](https://hub.docker.com)). You only need to do this once.
 
 This pulls the image (first time only) and drops you into the workshop. Type `help` to see everything available.
 
