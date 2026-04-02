@@ -446,6 +446,7 @@ setup_env_file() {
 
         # Load existing values as defaults
         local sw_project sw_token sw_space auth_user auth_pass weather_key ninjas_key
+        local ngrok_token ngrok_domain
 
         sw_project=$(env_val SIGNALWIRE_PROJECT_ID)
         sw_token=$(env_val SIGNALWIRE_API_TOKEN)
@@ -454,6 +455,9 @@ setup_env_file() {
         auth_pass=$(env_val SWML_BASIC_AUTH_PASSWORD)
         weather_key=$(env_val WEATHER_API_KEY)
         ninjas_key=$(env_val API_NINJAS_KEY)
+        ngrok_domain=$(env_val SWML_PROXY_URL_BASE)
+        # Strip https:// prefix for the prompt default
+        ngrok_domain="${ngrok_domain#https://}"
 
         printf "${BOLD}SignalWire Credentials${RESET} (from dashboard.signalwire.com)\n"
         sw_project=$(ask "Project ID" "${sw_project}")
@@ -466,10 +470,40 @@ setup_env_file() {
         auth_pass=$(ask "Basic Auth Password" "${auth_pass:-$(openssl rand -hex 8 2>/dev/null || echo changeMe123)}")
         echo ""
 
+        printf "${BOLD}ngrok Tunnel${RESET} (ngrok.com — exposes your agent to the internet)\n"
+        ngrok_token=$(ask "ngrok Authtoken (from ngrok.com/dashboard)" "")
+
+        # Configure ngrok auth if token provided
+        if [ -n "$ngrok_token" ] && command -v ngrok &>/dev/null; then
+            ngrok config add-authtoken "$ngrok_token" 2>/dev/null && ok "ngrok authtoken configured" \
+                || warn "Could not configure ngrok authtoken"
+        fi
+
+        # Try to auto-detect domain from a running ngrok tunnel
+        if [ -z "$ngrok_domain" ]; then
+            local _detected
+            _detected=$(curl -s --connect-timeout 2 http://127.0.0.1:4040/api/tunnels 2>/dev/null \
+                | grep -o '"public_url":"https://[^"]*"' | head -1 \
+                | sed 's/"public_url":"https:\/\///; s/"//') || true
+            if [ -n "$_detected" ]; then
+                ngrok_domain="$_detected"
+                ok "Auto-detected ngrok domain: ${ngrok_domain}"
+            fi
+        fi
+
+        ngrok_domain=$(ask "ngrok Static Domain (e.g. your-name.ngrok-free.app)" "${ngrok_domain}")
+        echo ""
+
         printf "${BOLD}External API Keys${RESET} (optional — needed for steps 7+)\n"
         weather_key=$(ask "WeatherAPI key (weatherapi.com)" "${weather_key}")
         ninjas_key=$(ask "API Ninjas key (api-ninjas.com)" "${ninjas_key}")
         echo ""
+
+        # Build SWML_PROXY_URL_BASE from domain if provided
+        local proxy_url=""
+        if [ -n "$ngrok_domain" ]; then
+            proxy_url="https://${ngrok_domain}"
+        fi
 
         # Write .env
         cat > "$SCRIPT_DIR/.env" <<ENVEOF
@@ -482,8 +516,8 @@ SIGNALWIRE_SPACE=${sw_space}
 SWML_BASIC_AUTH_USER=${auth_user}
 SWML_BASIC_AUTH_PASSWORD=${auth_pass}
 
-# ngrok: auto-detected at startup. Uncomment only if not using ngrok.
-# SWML_PROXY_URL_BASE=https://your-server.example.com
+# ngrok tunnel URL (used when auto-detection isn't available, e.g. Docker)
+SWML_PROXY_URL_BASE=${proxy_url}
 
 # Weather API (weatherapi.com - free tier)
 WEATHER_API_KEY=${weather_key}
@@ -492,6 +526,15 @@ WEATHER_API_KEY=${weather_key}
 API_NINJAS_KEY=${ninjas_key}
 ENVEOF
         ok "Wrote .env with your credentials"
+
+        # Show the SWML URL they'll paste into SignalWire dashboard
+        if [ -n "$proxy_url" ] && [ -n "$auth_user" ] && [ -n "$auth_pass" ]; then
+            printf "\n${BOLD}Your SignalWire SWML URL:${RESET}\n"
+            echo "  https://${auth_user}:${auth_pass}@${ngrok_domain}/"
+            echo ""
+            echo "  Paste this into your phone number's SWML URL field in the SignalWire dashboard."
+            echo ""
+        fi
     else
         ok ".env already configured"
     fi
@@ -816,7 +859,14 @@ if ! command -v ngrok &>/dev/null; then
     echo "  $step. Install ngrok: https://ngrok.com/download"
     step=$((step + 1))
 fi
-echo "  $step. Start tunnel:  ngrok http 3000"
+# Show ngrok start command with their static domain if configured
+_domain=$(env_val SWML_PROXY_URL_BASE)
+_domain="${_domain#https://}"
+if [ -n "$_domain" ]; then
+    echo "  $step. Start tunnel:  ngrok http --url=${_domain} 3000"
+else
+    echo "  $step. Start tunnel:  ngrok http 3000"
+fi
 echo ""
 printf "${BOLD}Run an agent:${RESET}\n"
 
