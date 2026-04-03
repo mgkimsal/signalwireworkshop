@@ -135,7 +135,7 @@ USER devuser
 RUN cat >> $HOME/.bashrc << 'BASHRC'
 
 # ── Workshop help ──
-help() {
+workshop() {
     cat << 'HELPEOF'
 
   ╔══════════════════════════════════════════════════════════════╗
@@ -179,14 +179,14 @@ help() {
     ./config.sh                Configure credentials + start ngrok
     cat .env                   View your credentials
     nano .env                  Edit your credentials
-    help                       Show this message again
+    workshop                   Show this message again
 
 HELPEOF
 }
 
 # Show welcome on login
 echo ""
-echo "  Welcome to the SignalWire Workshop! Type 'help' to get started."
+echo "  Welcome to the SignalWire Workshop! Type 'workshop' to get started."
 echo ""
 BASHRC
 

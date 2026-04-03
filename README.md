@@ -153,7 +153,7 @@ docker run -it -p 3000:3000 -p 4040:4040 briankwest/workshop
 
 > **`docker login`** — you may be prompted to log in to Docker Hub (free account at [hub.docker.com](https://hub.docker.com)). You only need to do this once.
 
-This pulls the image (first time only) and drops you into the workshop. Type `help` to see everything available.
+This pulls the image (first time only) and drops you into the workshop. Type `workshop` to see everything available.
 
 The two port flags make the workshop accessible from your computer:
 - **Port 3000** -- your agent (so ngrok can reach it)
@@ -211,7 +211,7 @@ Everything runs inside the container. ngrok creates an outbound tunnel from insi
 | What | Command |
 |------|---------|
 | Start the workshop | `docker run -it -p 3000:3000 -p 4040:4040 briankwest/workshop` |
-| Show help | `help` |
+| Show help | `workshop` |
 | Configure credentials | `./config.sh` |
 | View ngrok tunnel | `screen -r workshop-ngrok` (detach: Ctrl-A D) |
 | Stop ngrok | `screen -S workshop-ngrok -X quit` |
