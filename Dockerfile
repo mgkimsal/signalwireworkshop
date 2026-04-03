@@ -142,14 +142,12 @@ help() {
   ║  SignalWire AI Phone Agent Workshop                         ║
   ╚══════════════════════════════════════════════════════════════╝
 
-  FIRST TIME? Run setup to enter your API credentials:
+  FIRST TIME? Configure your API credentials:
 
-    ./setup.sh python          # set up one language
-    ./setup.sh python go       # or several
-    ./setup.sh                 # or all nine
+    ./config.sh
 
-  Setup will ask for your SignalWire, ngrok, and API keys, then
-  configure ngrok and start the tunnel automatically.
+  It asks for your SignalWire, ngrok, WeatherAPI, and API Ninjas
+  keys, then starts ngrok automatically. Takes 30 seconds.
 
   ─── Run an agent ─────────────────────────────────────────────
 
@@ -160,6 +158,8 @@ help() {
     Perl:       cd perl && PERL5LIB=../sdks/signalwire-perl/local/lib/perl5 perl steps/step04_hello_agent.pl
     Java:       cd java && source env.sh && cp steps/Step04HelloAgent.java src/main/java/HelloAgent.java && ./gradlew run -PmainClass=HelloAgent --console=plain
     C++:        cd cpp && cp steps/step04_hello_agent.cpp agent.cpp && cd build && cmake .. && make && ./agent
+    .NET:       cd dotnet && dotnet run
+    PHP:        cd php && php steps/step04_hello_agent.php
 
   ─── ngrok tunnel ─────────────────────────────────────────────
 
@@ -169,14 +169,14 @@ help() {
 
   ─── Workshop steps ───────────────────────────────────────────
 
-    Step 04: Hello World agent        Step 08: Weather (DataMap)
+    Step 04: Hello World agent         Step 08: Weather (DataMap)
     Step 06: Hardcoded jokes           Step 09: Polish & personality
     Step 07: Live API jokes            Step 10: Skills (datetime, math)
                                        Step 11: Complete agent
 
   ─── Useful commands ──────────────────────────────────────────
 
-    ./setup.sh python          Re-run setup for a language
+    ./config.sh                Configure credentials + start ngrok
     cat .env                   View your credentials
     nano .env                  Edit your credentials
     help                       Show this message again

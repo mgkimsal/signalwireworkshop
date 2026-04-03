@@ -163,21 +163,22 @@ The two port flags make the workshop accessible from your computer:
 
 ---
 
-#### Step 3: Enter Your Credentials
+#### Step 3: Configure Your Credentials
 
 Inside the container, run:
 
 ```bash
-./setup.sh python
+./config.sh
 ```
 
-Pick your language(s). Since everything is pre-built, setup only asks for your credentials:
+It walks you through four things:
 
-- **SignalWire** -- Project ID, API Token, Space Name (from [signalwire.com](https://signalwire.com) dashboard)
-- **ngrok** -- Auth token and static domain (from [ngrok.com](https://ngrok.com) dashboard) -- ngrok starts automatically in the background
-- **API keys** -- WeatherAPI and API Ninjas (for weather and joke steps)
+1. **SignalWire** -- Project ID, API Token, Space Name (from [signalwire.com](https://signalwire.com) dashboard)
+2. **Agent auth** -- username and password (auto-generated if you press Enter)
+3. **ngrok** -- auth token and static domain (from [ngrok.com](https://ngrok.com) dashboard) -- starts the tunnel automatically
+4. **API keys** -- WeatherAPI key (from [weatherapi.com](https://www.weatherapi.com)) and API Ninjas key (from [api-ninjas.com](https://api-ninjas.com)) -- needed for the weather and joke steps
 
-When setup finishes, it prints the **SWML URL** to paste into the SignalWire dashboard -- that connects your phone number to your agent.
+When it finishes, it prints the **SWML URL** to paste into the SignalWire dashboard -- that connects your phone number to your agent.
 
 ---
 
@@ -211,7 +212,7 @@ Everything runs inside the container. ngrok creates an outbound tunnel from insi
 |------|---------|
 | Start the workshop | `docker run -it -p 3000:3000 -p 4040:4040 briankwest/workshop` |
 | Show help | `help` |
-| Set up credentials | `./setup.sh python` (or any language) |
+| Configure credentials | `./config.sh` |
 | View ngrok tunnel | `screen -r workshop-ngrok` (detach: Ctrl-A D) |
 | Stop ngrok | `screen -S workshop-ngrok -X quit` |
 | ngrok web UI | `http://localhost:4040` in your browser |
