@@ -52,7 +52,9 @@ Let's get started.
 
 ## Platform Setup Guide
 
-Pick your platform below, then run `setup.sh` -- it detects what's missing and offers to install everything for you. You only need to follow the subsection for your platform.
+**Using Docker? That's the recommended path.** Jump straight to the [Docker Desktop](#docker-desktop-recommended) section below -- everything is pre-built, no language installation needed. Just run the container and `./config.sh`.
+
+The native installation sections (macOS, Linux, Windows) are only needed if you prefer to install language runtimes directly on your machine.
 
 ### Supported Language Versions
 
@@ -535,6 +537,8 @@ Your agent will use two external APIs: one for weather data and one for jokes. B
 
 ### Step 4: Create Your Environment File
 
+> **Docker users:** Skip this step. `./config.sh` inside the container creates your `.env` file interactively. Jump to [Section 4](#section-4-ngrok-setup-and-going-live) to understand how ngrok works, or go straight to your [language-specific guide](#choose-your-language).
+
 Copy the `.env.example` file from the workshop root into your project directory and fill in your values:
 
 ```
@@ -564,6 +568,8 @@ Replace every placeholder with your actual values. See [`.env.example`](.env.exa
 
 ## Section 4: ngrok Setup and Going Live
 
+> **Docker users:** `./config.sh` handles ngrok automatically -- it configures your auth token, starts the tunnel in the background, and prints your SWML URL. You can skip to [Choose Your Language](#choose-your-language). The steps below are for native installation only.
+
 Your agent will run locally, but SignalWire's cloud can't reach `localhost`. We need ngrok to create a public tunnel.
 
 ### Step 1: Install ngrok
@@ -588,7 +594,7 @@ Or download directly from [ngrok.com/download](https://ngrok.com/download).
 
 ### Step 2: Add Your Auth Token
 
-> **If you used `setup.sh`**, it already configured your auth token and started ngrok automatically. You can skip Steps 2 and 3.
+> **Docker users:** `./config.sh` already handled this. Skip to [Step 4: Connect Your Phone Number](#step-4-connect-your-phone-number-after-your-agent-is-running).
 
 ```bash
 ngrok config add-authtoken YOUR_NGROK_AUTHTOKEN
@@ -596,7 +602,9 @@ ngrok config add-authtoken YOUR_NGROK_AUTHTOKEN
 
 ### Step 3: Start the Tunnel
 
-`setup.sh` starts ngrok automatically in a background `screen` session. If you need to start it manually instead:
+> **Docker users:** `./config.sh` starts ngrok automatically in a background `screen` session. Skip to Step 4.
+
+For native installation, start ngrok manually:
 
 ```bash
 ngrok http --url=your-domain.ngrok-free.app 3000
@@ -606,7 +614,7 @@ Replace `your-domain.ngrok-free.app` with the static domain you created in Secti
 
 You should see ngrok's status display showing your tunnel is active, forwarding from your static domain to `localhost:3000`.
 
-> **Leave ngrok running.** You'll need this tunnel active throughout the workshop. If setup.sh started it, it's already running in the background — manage it with `screen -r workshop-ngrok`.
+> **Leave ngrok running.** Open a new terminal for everything else.
 
 ### Step 4: Connect Your Phone Number (After Your Agent Is Running)
 
