@@ -208,7 +208,7 @@ Everything runs inside the container. ngrok creates an outbound tunnel from insi
 
 ---
 
-#### Quick Reference
+#### Docker Quick Reference
 
 | What | Command |
 |------|---------|
@@ -383,7 +383,7 @@ sudo apt install -y nodejs
 **Go (Linux):** The apt version is usually too old. Install from the official tarball:
 
 ```bash
-GO_VERSION=1.26.1
+GO_VERSION=1.23.6
 GO_ARCH=$(dpkg --print-architecture 2>/dev/null || echo "amd64")
 wget "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
 sudo rm -rf /usr/local/go
@@ -467,7 +467,7 @@ The test script uses `swaig-test` (a CLI tool bundled with each SDK) to validate
 | Permission denied running `setup.sh` | All | `chmod +x setup.sh test.sh` |
 | `docker compose` not found | All | Make sure Docker Desktop is running. On older installs, try `docker-compose` (with hyphen) |
 | `docker compose build` fails | All | Check that Docker Desktop is running (whale icon in menu/system tray). On Linux, verify your user is in the `docker` group |
-| Port 3000 not reachable from host | Docker | Make sure you used `--service-ports` flag: `docker compose run --rm --service-ports workshop bash` |
+| Port 3000 not reachable from host | Docker | Make sure you included the port flags: `docker run -it -p 3000:3000 -p 4040:4040 briankwest/workshop` |
 | Agent can't detect ngrok in Docker | Docker | Expected -- set `SWML_PROXY_URL_BASE=https://your-domain.ngrok-free.app` in `.env` |
 
 ---
@@ -499,7 +499,7 @@ Once you're logged in to the SignalWire Dashboard:
 2. Search for a number in your area code (or any area code you like)
 3. Buy one number -- trial credits cover this
 
-> **Don't configure the phone number yet.** We'll point it at your agent after we set up ngrok in Section 5. For now, just make sure you have a number purchased.
+> **Don't configure the phone number yet.** We'll point it at your agent after we set up ngrok in the language-specific guide. For now, just make sure you have a number purchased.
 
 Write down your phone number. You'll need it later.
 
@@ -551,6 +551,9 @@ SIGNALWIRE_SPACE=your-space.signalwire.com
 SWML_BASIC_AUTH_USER=workshop
 SWML_BASIC_AUTH_PASSWORD=pickASecurePassword123
 
+# ngrok tunnel URL (auto-detected at startup, or set manually)
+SWML_PROXY_URL_BASE=https://your-domain.ngrok-free.app
+
 # Weather API
 WEATHER_API_KEY=your-weatherapi-key-here
 
@@ -560,9 +563,9 @@ API_NINJAS_KEY=your-api-ninjas-key-here
 
 Replace every placeholder with your actual values. See [`.env.example`](.env.example) for the full template.
 
-> **Note:** You might notice there's no `SWML_PROXY_URL_BASE` here. The agent code will auto-detect your ngrok tunnel at startup -- no need to configure it manually. If you're not using ngrok (e.g., deploying to a cloud server), you can add `SWML_PROXY_URL_BASE=https://your-server.example.com` to this file as a fallback.
+> **Note:** `SWML_PROXY_URL_BASE` is your ngrok tunnel URL. The agent code auto-detects it at startup if ngrok is running locally, so you can leave the placeholder. If you're not using ngrok (e.g., deploying to a cloud server), set it to your server's public URL.
 
-> **Important:** The `SWML_BASIC_AUTH_USER` and `SWML_BASIC_AUTH_PASSWORD` are credentials that SignalWire will use to authenticate with your agent. Choose whatever you want, but remember them -- you'll enter them into the SignalWire dashboard later.
+> **Important:** `SWML_BASIC_AUTH_USER` and `SWML_BASIC_AUTH_PASSWORD` are credentials that SignalWire will use to authenticate with your agent. Choose whatever you want, but remember them -- you'll enter them into the SignalWire dashboard later.
 
 ---
 
@@ -788,6 +791,9 @@ Here's how the workshop files are organized:
 workshop/
 ├── README.md              # This file -- shared setup and concepts
 ├── .env.example           # Environment variable template
+├── config.sh              # Interactive credential and ngrok setup
+├── setup.sh               # Language runtime and SDK installer
+├── test.sh                # Test framework for validating agents
 ├── Dockerfile             # Docker image with all language runtimes
 ├── docker-compose.yml     # One-command container startup
 ├── python/
@@ -821,7 +827,7 @@ workshop/
 
 ---
 
-## Section 12: Where to Go From Here
+## Where to Go From Here
 
 Once you've completed the language-specific guide and your agent is working, here's what's possible next.
 
@@ -891,6 +897,9 @@ Go build something great.
 
 | Variable | Purpose |
 |----------|---------|
+| `SIGNALWIRE_PROJECT_ID` | Your SignalWire project ID |
+| `SIGNALWIRE_API_TOKEN` | Your SignalWire API token |
+| `SIGNALWIRE_SPACE` | Your SignalWire space (e.g., `your-space.signalwire.com`) |
 | `SWML_BASIC_AUTH_USER` | Username for agent authentication |
 | `SWML_BASIC_AUTH_PASSWORD` | Password for agent authentication |
 | `SWML_PROXY_URL_BASE` | Auto-detected from ngrok; set manually only if not using ngrok |
