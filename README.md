@@ -539,7 +539,7 @@ Your agent will use two external APIs: one for weather data and one for jokes. B
 
 1. Go to [ngrok.com](https://ngrok.com/) and sign up for a free account
 2. From the ngrok dashboard, copy your **Authtoken**
-3. Go to **Domains** in the left sidebar and create a free static domain
+3. Go to [**Domains**](https://dashboard.ngrok.com/domains) in the left sidebar and create a free static domain
    - It will look something like `your-name-here.ngrok-free.app`
    - Write this down -- it's your permanent tunnel URL
 
