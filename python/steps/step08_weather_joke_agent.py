@@ -71,6 +71,13 @@ class WeatherJokeAgent(AgentBase):
             ]
         )
 
+        # Debug: webhook points back to this agent, level 2 = all events
+        self.enable_debug_events(level=2)
+
+        @self.on_debug_event
+        def handle_debug(event_type, data):
+            print(f"\n[DEBUG] {event_type}: {json.dumps(data, indent=2, default=str)}")
+
         self._register_joke_function()
         self._register_weather_datamap()
 
@@ -128,13 +135,13 @@ class WeatherJokeAgent(AgentBase):
                 f"https://api.weatherapi.com/v1/current.json?key={api_key}&q=${{enc:args.city}}"
             )
             .output(FunctionResult(
-                "Weather in ${args.city}: ${response.current.condition.text}, "
-                "${response.current.temp_f} degrees Fahrenheit, "
-                "humidity ${response.current.humidity} percent. "
-                "Feels like ${response.current.feelslike_f} degrees."
+                "Weather in ${{args.city}}: ${{response.current.condition.text}}, "
+                "${{response.current.temp_f}} degrees Fahrenheit, "
+                "humidity ${{response.current.humidity}} percent. "
+                "Feels like ${{response.current.feelslike_f}} degrees."
             ))
             .fallback_output(FunctionResult(
-                "Sorry, I couldn't get the weather for ${args.city}. "
+                "Sorry, I couldn't get the weather for ${{args.city}}. "
                 "Please check the city name and try again."
             ))
         )
