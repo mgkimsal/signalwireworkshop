@@ -139,7 +139,7 @@ workshop() {
     cat << 'HELPEOF'
 
   ╔══════════════════════════════════════════════════════════════╗
-  ║  SignalWire AI Phone Agent Workshop                         ║
+  ║  SignalWire AI Phone Agent Workshop                          ║
   ╚══════════════════════════════════════════════════════════════╝
 
   FIRST TIME? Configure your API credentials:
