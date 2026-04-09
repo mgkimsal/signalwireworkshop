@@ -40,7 +40,11 @@ The class names are: `HelloAgent`, `JokeAgent`, `WeatherJokeAgent`, `CompleteAge
 
 ## Section 3: Project Setup (5 min)
 
-From the **workshop root**, run `./setup.sh java`, then `cd java && source env.sh`. Edit `env.sh` to fill in your actual API keys and credentials before sourcing it.
+> [!NOTE]
+> **Docker users:** The setup script has already run inside the container. Just run `cd java` and skip to Section 4.
+> The instructions below are for native installs only.
+
+From the **workshop root**, run `./setup.sh java`, then `cd java`. This builds the SDK jar and creates a `.env` file (if one doesn't exist) with your environment variables.
 
 ---
 
@@ -63,7 +67,6 @@ See [steps/Step04HelloAgent.java](steps/Step04HelloAgent.java) for the complete 
 ### Build and Run
 
 ```bash
-source env.sh
 cp steps/Step04HelloAgent.java src/main/java/HelloAgent.java
 ./gradlew run -PmainClass=HelloAgent
 ```
@@ -78,17 +81,17 @@ In a **separate terminal** (keep the agent running), test with curl:
 curl -s -u workshop:pickASecurePassword123 http://localhost:3000/ | python3 -m json.tool
 ```
 
-Use whatever values you set for `SWML_BASIC_AUTH_USER` and `SWML_BASIC_AUTH_PASSWORD` in your `env.sh` file.
+Use whatever values you set for `SWML_BASIC_AUTH_USER` and `SWML_BASIC_AUTH_PASSWORD` in your `.env` file.
 
 You should see SWML JSON output. Your agent is serving its configuration correctly.
 
-> **Checkpoint:** You see SWML JSON output from curl. The JSON contains your prompt text and voice settings. If not, double-check that your environment variables are set (`source env.sh`) and that `./gradlew build` succeeded without errors.
+> **Checkpoint:** You see SWML JSON output from curl. The JSON contains your prompt text and voice settings. If not, double-check that your `.env` file has the correct values and that `./gradlew build` succeeded without errors.
 
 ---
 
 ## Section 5: ngrok and Going Live (10 min)
 
-Your agent is running locally, but SignalWire's cloud can't reach `localhost:3000`. We need ngrok to create a public tunnel. See the [shared setup](../README.md#step-3-ngrok-account-and-static-domain) if you haven't installed ngrok yet.
+Your agent is running locally, but SignalWire's cloud can't reach `localhost:3000`. We need ngrok to create a public tunnel. See the [shared setup](../README.md#section-4-ngrok-setup-and-going-live) if you haven't installed ngrok yet.
 
 ### Step 1: Restart Your Agent
 
@@ -190,7 +193,7 @@ curl -s -H "X-Api-Key: YOUR_API_NINJAS_KEY" https://api.api-ninjas.com/v1/dadjok
 - Removed the `JOKES` list and `ThreadLocalRandom` import
 - Added a shared `HttpClient` instance (Java's built-in HTTP client, thread-safe and reusable)
 - The `tellJoke` method calls the API Ninjas endpoint using `HttpRequest` and `HttpResponse`
-- We read the API key from `System.getenv()` (your `env.sh` file)
+- We read the API key from `System.getenv()` (your `.env` file)
 - Gson (included as a transitive dependency from `@signalwire/sdk`) parses the JSON response
 - There's error handling -- if the API is down or the key is wrong, the agent says something graceful instead of crashing
 - The handler is now a method reference `JokeAgent::tellJoke` instead of an inline lambda
@@ -206,7 +209,7 @@ cp steps/Step07JokeAgent.java src/main/java/JokeAgent.java
 
 Call your number and ask for jokes. Every joke is now fresh from the internet.
 
-> **Checkpoint:** Every time you ask for a joke, you get a different one. If you're getting errors, make sure `API_NINJAS_KEY` is set in your environment (`source env.sh`).
+> **Checkpoint:** Every time you ask for a joke, you get a different one. If you're getting errors, make sure `API_NINJAS_KEY` is set in your `.env` file.
 
 ---
 
@@ -433,7 +436,7 @@ agent.addSkill("skill_name", Map.of("config_key", "value"));
 | Problem | Solution |
 |---------|----------|
 | `./gradlew build` fails | Check `java --version` is 21+, check `build.gradle` syntax |
-| Agent won't start | Check env vars are set (`source env.sh`) |
+| Agent won't start | Check env vars are set in your `.env` file |
 | Can't reach agent from internet | Is ngrok running? Check `http://127.0.0.1:4040` |
 | SignalWire can't reach agent | Verify SWML URL has trailing slash, auth matches |
 | Weather returns errors | Check `WEATHER_API_KEY` in your environment |

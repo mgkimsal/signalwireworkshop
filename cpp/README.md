@@ -45,6 +45,10 @@ Each section has a corresponding step file in `steps/` with the complete working
 
 ## Section 3: Project Setup (10 min)
 
+> [!NOTE]
+> **Docker users:** The setup script has already run inside the container. Just run `cd cpp` and skip to Section 4.
+> The instructions below are for native installs only.
+
 Your SignalWire account and external API keys should already be set up from the [shared setup](../README.md). Run the automated setup script from the **workshop root**:
 
 ```bash
@@ -118,7 +122,7 @@ You should see SWML JSON output containing your prompt text and voice settings.
 
 ## Section 5: ngrok and Going Live (10 min)
 
-Your agent is running locally, but SignalWire's cloud can't reach `localhost:3000`. We need ngrok to create a public tunnel. See the [shared setup](../README.md#step-3-ngrok-account-and-static-domain) if you haven't installed ngrok yet.
+Your agent is running locally, but SignalWire's cloud can't reach `localhost:3000`. We need ngrok to create a public tunnel. See the [shared setup](../README.md#section-4-ngrok-setup-and-going-live) if you haven't installed ngrok yet.
 
 ### Step 1: Restart Your Agent
 

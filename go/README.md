@@ -28,6 +28,10 @@ Each section has a corresponding step file in `steps/` with the complete working
 
 ## Section 3: Project Setup (5 min)
 
+> [!NOTE]
+> **Docker users:** The setup script has already run inside the container. Just run `cd go` and skip to Section 4.
+> The instructions below are for native installs only.
+
 Your SignalWire account and external API keys should already be set up from the [shared setup](../README.md). From the workshop root, run:
 
 ```bash
@@ -40,7 +44,7 @@ Then enter the project directory:
 cd go
 ```
 
-This installs dependencies, creates a `.env` template for your API keys, and initializes the Go module. Fill in your actual credentials in `.env` before continuing.
+This installs dependencies, creates a `.env` file (if one doesn't exist), and initializes the Go module.
 
 ---
 
@@ -87,7 +91,7 @@ You should see SWML JSON. Your agent is serving its configuration correctly.
 
 ## Section 5: ngrok and Going Live (10 min)
 
-Your agent is running locally, but SignalWire's cloud can't reach `localhost:3000`. We need ngrok to create a public tunnel. See the [shared setup](../README.md#step-3-ngrok-account-and-static-domain) if you haven't installed ngrok yet.
+Your agent is running locally, but SignalWire's cloud can't reach `localhost:3000`. We need ngrok to create a public tunnel. See the [shared setup](../README.md#section-4-ngrok-setup-and-going-live) if you haven't installed ngrok yet.
 
 ### Step 1: Restart Your Agent
 

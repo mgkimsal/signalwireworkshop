@@ -28,6 +28,10 @@ Each section has a corresponding step file in `steps/` with the complete working
 
 ## Section 3: Project Setup (5 min)
 
+> [!NOTE]
+> **Docker users:** The setup script has already run inside the container. Just run `cd dotnet` and skip to Section 4.
+> The instructions below are for native installs only.
+
 From the workshop root directory, run the setup script:
 
 ```bash

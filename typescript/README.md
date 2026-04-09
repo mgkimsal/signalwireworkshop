@@ -29,6 +29,10 @@ Each section has a corresponding step file in `steps/` with the complete working
 
 ## Section 3: Project Setup (5 min)
 
+> [!NOTE]
+> **Docker users:** The setup script has already run inside the container. Just run `cd typescript` and skip to Section 4.
+> The instructions below are for native installs only.
+
 From the workshop root directory, run the setup script and change into the project folder:
 
 ```bash
@@ -81,7 +85,7 @@ Use whatever values you set for `SWML_BASIC_AUTH_USER` and `SWML_BASIC_AUTH_PASS
 
 ## Section 5: ngrok and Going Live (10 min)
 
-Your agent is running locally, but SignalWire's cloud can't reach `localhost:3000`. We need ngrok to create a public tunnel. See the [shared setup](../README.md#step-3-ngrok-account-and-static-domain) if you haven't installed ngrok yet.
+Your agent is running locally, but SignalWire's cloud can't reach `localhost:3000`. We need ngrok to create a public tunnel. See the [shared setup](../README.md#section-4-ngrok-setup-and-going-live) if you haven't installed ngrok yet.
 
 ### Step 1: Restart Your Agent
 
