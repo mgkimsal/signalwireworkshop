@@ -135,13 +135,13 @@ class WeatherJokeAgent(AgentBase):
                 f"https://api.weatherapi.com/v1/current.json?key={api_key}&q=${{enc:args.city}}"
             )
             .output(FunctionResult(
-                "Weather in ${{args.city}}: ${{response.current.condition.text}}, "
-                "${{response.current.temp_f}} degrees Fahrenheit, "
-                "humidity ${{response.current.humidity}} percent. "
-                "Feels like ${{response.current.feelslike_f}} degrees."
+                "Weather in ${args.city}: ${current.condition.text}, "
+                "${current.temp_f} degrees Fahrenheit, "
+                "humidity ${current.humidity} percent. "
+                "Feels like ${current.feelslike_f} degrees."
             ))
             .fallback_output(FunctionResult(
-                "Sorry, I couldn't get the weather for ${{args.city}}. "
+                "Sorry, I couldn't get the weather for ${args.city}. "
                 "Please check the city name and try again."
             ))
         )
