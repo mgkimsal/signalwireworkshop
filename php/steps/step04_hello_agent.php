@@ -56,7 +56,7 @@ checkNgrok();
 
 // --- Agent ---
 
-$agent = new AgentBase(name: 'hello-agent', route: '/');
+$agent = new AgentBase(['name' => 'hello-agent', 'route' => '/']);
 
 $agent->addLanguage(name: 'English', code: 'en-US', voice: 'rime.spore');
 

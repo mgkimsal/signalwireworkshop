@@ -48,7 +48,7 @@ function checkNgrok(): string {
 
 checkNgrok();
 
-$agent = new AgentBase(name: 'joke-agent', route: '/');
+$agent = new AgentBase(['name' => 'joke-agent', 'route' => '/']);
 
 $agent->addLanguage(name: 'English', code: 'en-US', voice: 'rime.spore');
 
